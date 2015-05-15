@@ -6,7 +6,7 @@
     "Asher <asher.pasha@utoronto.ca>"
   ],
   "description": "GeneSlider Bower Package for Araport",
-  "main": "geneSlider.js",
+  "main": "GeneSlider.pde",
   "keywords": [
     "Bioinformatics",
     "Alignments"

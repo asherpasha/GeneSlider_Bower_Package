@@ -2286,7 +2286,7 @@ void displayMessage(String messageText, String lineTwo, int fade) {
 void DNAorProtein(char[][] data) {
     for (int j = 0; j < numSequences - 1; j++) {
         for (int i = 0; i < numNucleotides -1; i++) {
-            if (!str(data[i][j]).equals("") && !str(data[i][j]).equals("-") && !str(data[i][j]).toUpperCase().equals("A") && !str(data[i][j]).toUpperCase().equals("C") && !str(data[i][j]).toUpperCase().equals("T") && !str(data[i][j]).toUpperCase().equals("U") && !str(data[i][j]).toUpperCase().equals("G") ) {
+            if (!str(data[i][j]).equals("") && !str(data[i][j]).equals("-") && !str(data[i][j]).toUpperCase().equals("A") && !str(data[i][j]).toUpperCase().equals("N") && !str(data[i][j]).toUpperCase().equals("C") && !str(data[i][j]).toUpperCase().equals("T") && !str(data[i][j]).toUpperCase().equals("U") && !str(data[i][j]).toUpperCase().equals("G") ) {
                 DNA = false;
                 return;
             }
@@ -4351,6 +4351,7 @@ void showZoomedGff() {
                         if (endElement > startElement) {
                             // Get the Y position. Note: This is better than map
                             newY = y + offset * (b/(float(jsonClone.maxTranscript) + 2));
+                            fill(255, 220);
                             rect(startElement + x, newY + h/2 -1, endElement - startElement, 1);
                         }
                     }
@@ -4369,6 +4370,7 @@ void showZoomedGff() {
 
                         if (endElement > startElement) {
                             // Get the Y position. Note: This is better than map
+                            fill(255, 220);
                             newY = y + offset * (b/(float(jsonClone.maxTranscript) + 2));
                             if (jsonClone.gff[i].data[j][3].equals("+") && points[i] == jsonClone.gff[i].data[j][2] ) {
                                 drawPointedRectangle(startElement + x, newY, endElement - startElement, "+", 255);
@@ -4548,6 +4550,7 @@ void showgffPanel() {
                         }
 
                         // draw line
+                        fill(255, 220);
                         rect(startElement + x, newY + h/2 -1, endElement - startElement, 1);
                     }
                     if (jsonClone.gff[i].data[j][0].equals("gene")) {
@@ -4573,7 +4576,8 @@ void showgffPanel() {
 
                         // Get the Y position. Note: This is better than map
                         newY = y + offset * (b/(float(jsonClone.maxTranscript) + 2));
-
+                        
+                        fill(255, 220);
                         if (jsonClone.gff[i].data[j][3].equals("+") && points[i] == jsonClone.gff[i].data[j][2] ) {
                             drawPointedRectangle(startElement + x, newY, endElement - startElement, "+", 255);
                         } else if (jsonClone.gff[i].data[j][3].equals("-") && points[i] == jsonClone.gff[i].data[j][1]) {
@@ -4623,25 +4627,23 @@ void showgffPanel() {
                 // Draw JASPAR
                 for (j = 0; j < jsonClone.gff[i].data.length; j++) {                
                     if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
-                        // offset could be - 20
-                        offset = 20;
-
+   
                         // Get the start and the end
                         startElement = getStartElement(jsonClone.gff[i].data[j][1], jsonClone.start, scale);
                         endElement = getEndElement(jsonClone.gff[i].data[j][2], jsonClone.start, scale, size);
 
                         // Get the Y position. Note: This is better than map
-                        newY = y + offset;
+                        newY = y + 20;
                         float value = parseFloat(jsonClone.gff[i].data[j][4]);
                         float jasparColorAlpha = (int)((value * 10 + 0.5))/10.0;
                         String jasparColor = getColor(jsonClone.gff[i].data[j][6]);
                         jasparColorAlpha = map(jasparColorAlpha, 0, 1, -1, -0.5);
                         jasparColorAlpha = abs(jasparColorAlpha);
-                        int r = 255 - unhex(jasparColor.substring(1, 3));
-                        int g = 255 - unhex(jasparColor.substring(3, 5));
-                        int b = 255 - unhex(jasparColor.substring(5, 7));
-                        stroke(r * jasparColorAlpha, g * jasparColorAlpha, b * jasparColorAlpha);
-                        fill(r * jasparColorAlpha, g * jasparColorAlpha, b * jasparColorAlpha);
+                        int red = 255 - unhex(jasparColor.substring(1, 3));
+                        int green = 255 - unhex(jasparColor.substring(3, 5));
+                        int blue = 255 - unhex(jasparColor.substring(5, 7));
+                        stroke(red * jasparColorAlpha, green * jasparColorAlpha, blue * jasparColorAlpha);
+                        fill(red * jasparColorAlpha, green * jasparColorAlpha, blue * jasparColorAlpha);
                         ellipse(startElement + x, newY, 5, 5);
                         stroke(220);
 

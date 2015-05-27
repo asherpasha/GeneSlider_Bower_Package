@@ -296,6 +296,10 @@ void myMousePressed() {
         fastaData = ">1\nATG\n>2\nATG\n>3\nAAG\n>4\nAAC";
     }
     
+    if (displayLegend) {
+        displayLegend = false;
+    }
+    
     // Column Pressed
     columnPressed();
 
@@ -2137,6 +2141,13 @@ void resetData() {
     horizontalBar.updatePixels();
 
     DNA = true;
+    
+    motifs.clear();    // Hashmap to store motifs and their colors
+    motifCounter = 0;    // Counter to pick colors    
+    displayLegend = false;
+    motifOffset = 0;    // Y offset to avoid overlapping motifs
+    motifEnd = 0;    // When to off set
+    motifStart = 0;    // When to offset
 }
 
 // Show Introduction
@@ -3646,6 +3657,19 @@ void drawMotifLegend() {
             fill(#222222);    
             text(me.getKey(), x + 175, y + 15 * count);
             count = count + 1;
+            if (count == 12) {
+                x = x + 180;
+                y = (height/2) - (h/2);
+                count = 2;
+            } else if (count == 22) {
+                x = x + 180;
+                y = (height/2) - (h/2);
+            } else if (count == 33) {
+                x = x + 180;
+                y = (height/2) - (h/2);
+            } else {
+                // Don't do anything here
+            }
         }
     }    
 

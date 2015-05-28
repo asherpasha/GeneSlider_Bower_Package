@@ -690,6 +690,7 @@ class CharacterBit {
 class Digit {
     // an object that contains several CharacterBits
     CharacterBit[] d_characterBits;
+    CharaterBit d_characterBitAt;
     int d_index = 0;        // This is the index of DNA/AA in alignment
     char[] digitColumn;    // This is all the DNA/AA chars in the alignment
     float entropy = 0;        // The entropy
@@ -714,8 +715,9 @@ class Digit {
 
         digitColumn = new char[d_digitColumn.length];
         arrayCopy(d_digitColumn, digitColumn);    // The list of letters in the alignment
+        
 
-
+        
         // Data processor
         // Calculate unique data
         uniqueDigitsInColumn = calcUniqueData();
@@ -815,6 +817,9 @@ class Digit {
             d_characterBits[i] = new CharacterBit(sortedChars[i], sortedHeights[i]);
             d_thisDigitHeight = d_thisDigitHeight + sortedHeights[i];
         }
+        
+        // Display AT sequence
+        d_characterBitAt = new CharacterBit(digitColumn[0], 1);
     }
 
     ///////draw the digit
@@ -889,6 +894,9 @@ class Digit {
                 d_chColor = color(colorScheme[currentColorScheme][symbols.indexOf(sortedChars[i]) ]);
             }
             d_characterBits[i].ch_display(0 - (d_w/2), superScript, d_w, d_h, d_chColor);
+           if (i == 0) {
+                d_characterBitAt.ch_display(0 - (d_w/2), 10, d_w, 5, d_chColor);
+            }
             superScript = superScript - (sortedHeights[i] * d_h);
             popMatrix();
         }
@@ -912,7 +920,10 @@ class Digit {
     void d_numberBelowDigit() { 
         int numToDisplay = alnStart + d_index;
         int displayDigitHowMany = endDigit - startDigit;
-
+        
+        // This is done so that AT sequence can be displayed
+        d_y = d_y + 3;
+        
         fill(200);
         textAlign(CENTER);
         textFont (helvetica18, 12);
@@ -946,6 +957,8 @@ class Digit {
             text(".", 0, 14);
         }  
         popMatrix();
+        
+        d_y = d_y - 3;
     }
 
     void d_showNumLettersInColumn() { 
@@ -2648,6 +2661,12 @@ void drawAxis() {
         } else {
             text("Bit Score", 48, digitY + 24);
         }
+        
+        if (gffPanelOpen) {
+            text("TAIR10", 48, digitY + 14);
+        } else {
+            text("Ref", 48, digitY + 14);
+        }
     } else {
 
         for (float i=0; i<=4.32; i=i+.5) {
@@ -3661,12 +3680,6 @@ void drawMotifLegend() {
                 x = x + 180;
                 y = (height/2) - (h/2);
                 count = 2;
-            } else if (count == 22) {
-                x = x + 180;
-                y = (height/2) - (h/2);
-            } else if (count == 33) {
-                x = x + 180;
-                y = (height/2) - (h/2);
             } else {
                 // Don't do anything here
             }

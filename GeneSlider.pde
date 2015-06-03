@@ -83,7 +83,7 @@ PFont courier10 = createFont("Courier", 10, true);
 
 // Slider Bar variables
 int sliderBarPaddingFromSide = 60;    // How far it is from sides
-int sliderBarPaddingFromTop = 430;    // How far it is from top
+int sliderBarPaddingFromTop = 440;    // How far it is from top
 float sliderRectStart;
 float sliderRectEnd;
 boolean mouseLockScroll = false;
@@ -895,7 +895,7 @@ class Digit {
             }
             d_characterBits[i].ch_display(0 - (d_w/2), superScript, d_w, d_h, d_chColor);
            if (i == 0) {
-                d_characterBitAt.ch_display(0 - (d_w/2), 10, d_w, 5, d_chColor);
+                d_characterBitAt.ch_display(0 - (d_w/2), 15, d_w, 5, d_chColor);
             }
             superScript = superScript - (sortedHeights[i] * d_h);
             popMatrix();
@@ -922,7 +922,7 @@ class Digit {
         int displayDigitHowMany = endDigit - startDigit;
         
         // This is done so that AT sequence can be displayed
-        d_y = d_y + 3;
+        d_y = d_y + 12;
         
         fill(200);
         textAlign(CENTER);
@@ -958,7 +958,7 @@ class Digit {
         }  
         popMatrix();
         
-        d_y = d_y - 3;
+        d_y = d_y - 12;
     }
 
     void d_showNumLettersInColumn() { 
@@ -2154,7 +2154,7 @@ void resetData() {
     horizontalBar.updatePixels();
 
     DNA = true;
-    
+
     motifs.clear();    // Hashmap to store motifs and their colors
     motifCounter = 0;    // Counter to pick colors    
     displayLegend = false;
@@ -2372,6 +2372,11 @@ void dataLoader() {
     horizontalBar.updatePixels();
 
     // Digits are now loaded are ready for action
+
+    // Add positions
+    if (gffPanelOpen) {
+        addMotifPosition();
+    }
 }
 
 void constrainDigits() {
@@ -2657,15 +2662,15 @@ void drawAxis() {
         fill(200);
         textFont (helvetica10, 10); 
         if (showWeightedBitScore) {
-            text("Weighted\nBit Score", 48, digitY+24);
+            text("Weighted\nBit Score", 48, digitY-(2 * digitHeight)-22);
         } else {
-            text("Bit Score", 48, digitY + 24);
+            text("Bit Score", 48, digitY-(2 * digitHeight)-18);
         }
-        
+
         if (gffPanelOpen) {
-            text("TAIR10", 48, digitY + 14);
+            text("TAIR10", 48, digitY + 18);
         } else {
-            text("Ref", 48, digitY + 14);
+            text("Ref", 48, digitY + 18);
         }
     } else {
 
@@ -2706,9 +2711,9 @@ void drawAxis() {
             fill(200);
             textFont (helvetica10, 10);
             if (showWeightedBitScore) {
-                text("Weighted\nBit Score", 48, digitY+24);
+                text("Weighted\nBit Score", 48, digitY-(2 * digitHeight)-22);
             } else {
-                text("Bit Score", 48, digitY+24);
+                text("Bit Score", 48, digitY-(2 * digitHeight)-18);
             }   
             //text("Protein", 48, digitY+36);
         }
@@ -2747,7 +2752,7 @@ void drawAxis() {
 
     // and draw the word "Sequences"
     textFont (helvetica18, 10);
-    text("Sequences", canvasWidth-60, digitY+24);
+    text("Sequences", canvasWidth-60, digitY-(2 * digitHeight)-18);
     //// if we're in saturation view...
     noStroke();
     if (!alignmentCountIndicator) { 
@@ -2756,6 +2761,17 @@ void drawAxis() {
             rect(canvasWidth-45, digitY-(i * digitHeight/numSequences * adjustmentForDNAorProtein), 8, -digitHeight/numSequences * 1.5);
         }
     }
+    
+    // Show AGI if it exits
+    if ((gffPanelOpen) && !(searchPanelOpen)) {
+        if (agi != "") {
+            textFont(helvetica18, 28);
+            text(agi.toUpperCase(), canvasWidth/2 - 55, 30);
+            textFont(helvetica18, 16);
+            text("Conservation bit scores across " + numSequences + " species", canvasWidth/2 - 110, 55);
+        }
+    }
+        
 }
 
 // Rount the two decimal places
@@ -3601,12 +3617,94 @@ String getColor(String motif) {
             motifCounter = motifCounter + 1;
 
             // If the counter is past 139, reset it
-            if (motifCounter >= motifColors.lenght - 1) {
+            if (motifCounter >= motifColors.length - 1) {
                 motifCounter = 0;
             }
         }
     }
     return motifs.get(motif);
+}
+
+// Check if JASPAR data overlap in zoom view
+boolean checkOverlap(int startx, int endx, int starty, int endy) {
+    if ((startx <= starty) && (endx >= starty)) {
+        return true;
+    } else if ((startx >= starty) && (startx <= endy)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+// Return index of max array
+int getIndex(int startx) {
+    int JasIndex = (startx - jsonClone.start)/50;
+    return (int) JasIndex;
+}
+
+// Add motif position for zoomed view
+void addMotifPosition() {
+    int JasSize = (int) ((jsonClone.end - jsonClone.start) / 50);
+    int[] max = new int[JasSize]; 
+    int i, j, k;
+    int JasIndex;
+    
+    //init array
+    for (i = 0; i < max.length; i++) {
+        max[i] = 1;
+    }
+
+    // Add the positon of one to all JASPAR
+    for (i = 0; i < jsonClone.transcripts; i++) {
+        for (j = 0; j < jsonClone.gff[i].data.length; j++) {
+            if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
+                if (jsonClone.gff[i].data[j].length == 7) {
+                    append(jsonClone.gff[i].data[j], 0);
+                }
+            }
+        }
+    }
+
+    for (i = 0; i < jsonClone.transcripts; i++) {
+        for (j = 0; j < jsonClone.gff[i].data.length; j++) {
+            for (k = 0; k < jsonClone.gff[i].data.length; k++) {
+                if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
+                    if (jsonClone.gff[i].data[k][0].equals("JASPAR")) {
+                        
+                        // It will always overlap with itself (!)
+                        if ((jsonClone.gff[i].data[j][6] == jsonClone.gff[i].data[k][6]) && (jsonClone.gff[i].data[j][1] == jsonClone.gff[i].data[k][1]) && (jsonClone.gff[i].data[j][2] == jsonClone.gff[i].data[k][2])) {
+                            continue;
+                        }
+                        // If overlaps
+                        if (checkOverlap(jsonClone.gff[i].data[j][1], jsonClone.gff[i].data[j][2], jsonClone.gff[i].data[k][1], jsonClone.gff[i].data[k][2])) {
+                            //println(jsonClone.gff[i].data[j][6] + " " + jsonClone.gff[i].data[k][6]);
+                            if (jsonClone.gff[i].data[j][7] == 0) {
+                                JasIndex = getIndex(jsonClone.gff[i].data[j][1]);
+                                //println(JasIndex + " " + JasSize);
+                                jsonClone.gff[i].data[j][7] = max[JasIndex];
+                                max[JasIndex] = max[JasIndex]+1;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
+                //println(jsonClone.gff[i].data[j][7] + " " + jsonClone.gff[i].data[j][6] + " " + jsonClone.gff[i].data[j][1] + " " + jsonClone.gff[i].data[j][2]);
+            }
+        }
+    }
+    
+    // Add the positon of one to all JASPAR
+    for (i = 0; i < jsonClone.transcripts; i++) {
+        for (j = 0; j < jsonClone.gff[i].data.length; j++) {
+            if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
+                if (jsonClone.gff[i].data[j][7] == 0) {
+                    jsonClone.gff[i].data[j][7] = 1;
+                }
+            }
+        }
+    }
 }
 
 // The popup legend
@@ -3691,7 +3789,6 @@ void drawMotifLegend() {
     strokeWeight(2);
     stroke(220);
 }
-
 
 // Files: GSGUI.pde
 ///Rectangular button class
@@ -4225,6 +4322,7 @@ void setSessionData(String _source, String _agi, int _before, int _after, String
     }
 }
 
+
 // This function draws a pointed rectangle to represent a gene on GFF pannel
 void drawPointedRectangle(int x, int y, int w, String strand, int shade) {
     int h = 12;    // The height for these boxes
@@ -4472,18 +4570,11 @@ void showZoomedGff() {
                         startElement = getStartElement(jsonClone.gff[i].data[j][1], startDigit + alnStart, scale);
                         endElement = getEndElement(jsonClone.gff[i].data[j][2], startDigit + alnStart, scale, size);
 
-
                         if (endElement > startElement) {
 
-                            // set motifEnd and motif offset
-                            if (( startElement <= motifEnd )) {
-                                motifOffset = motifOffset + 10;
-                            } else if ((startElement + x ) <= 0) {
-                                motifOffset = 0;
-                            } else {
-                                motifOffset = 0;
+                            // Set motif offset
+                            motifOffset = jsonClone.gff[i].data[j][7] * 10;
 
-                            } 
                             motifEnd = endElement;
                             motifStart = startElement;
                             newY = y + 10 + motifOffset;  
@@ -4499,12 +4590,12 @@ void showZoomedGff() {
                             fill(red * jasparColorAlpha, green * jasparColorAlpha, blue * jasparColorAlpha);
                             noStroke(red * jasparColorAlpha, green * jasparColorAlpha, blue * jasparColorAlpha);
                             // Get the Y position. Note: This is better than map
-                            rect(startElement + x, newY, endElement -  startElement, h, 10);
+                            rect(startElement + x, newY, endElement -  startElement, 9, 10);
                             stroke(220);
                         }
 
                         // GFF info box
-                        if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY - 5 && mouseY < newY + h)) {
+                        if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY - 5 && mouseY < newY + 9)) {
                             displaygffMessage("Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3] + "\nFD: " + jsonClone.gff[i].data[j][4] + "\nMatch: " + jsonClone.gff[i].data[j][5] + "\nMotif: " + jsonClone.gff[i].data[j][6] + "\n");
                         }
                     } else {
@@ -4548,7 +4639,7 @@ void showgffPanel() {
     stroke(200);
     textAlign(RIGHT);
     textFont (helvetica10, 10); 
-    text("TAIR10\nGFF", sliderBarPaddingFromSide - 10, sliderBarPaddingFromTop + 30);
+    text("GFF", sliderBarPaddingFromSide - 10, sliderBarPaddingFromTop + 35);
 
     if (gffPanelOpen) {
         //rectButtonBottomRow = 580;    
@@ -4613,7 +4704,7 @@ void showgffPanel() {
 
                         // Get the Y position. Note: This is better than map
                         newY = y + offset * (b/(float(jsonClone.maxTranscript) + 2));
-                        
+
                         fill(255, 220);
                         if (jsonClone.gff[i].data[j][3].equals("+") && points[i] == jsonClone.gff[i].data[j][2] ) {
                             drawPointedRectangle(startElement + x, newY, endElement - startElement, "+", 255);
@@ -4664,7 +4755,7 @@ void showgffPanel() {
                 // Draw JASPAR
                 for (j = 0; j < jsonClone.gff[i].data.length; j++) {                
                     if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
-   
+
                         // Get the start and the end
                         startElement = getStartElement(jsonClone.gff[i].data[j][1], jsonClone.start, scale);
                         endElement = getEndElement(jsonClone.gff[i].data[j][2], jsonClone.start, scale, size);
@@ -4696,5 +4787,6 @@ void showgffPanel() {
         }
     }
 }
+
 
 

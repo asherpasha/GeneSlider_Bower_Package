@@ -73,7 +73,7 @@ PFont[] font = {
     createFont("Helvetica", fontSize, true), createFont("Times", fontSize, true), createFont("Courier", fontSize, true)
     };
 float[] fontHeightMultiplier = { 
-    .72, .67, .58
+    .69, .66, .66
 };
 float fontHeight = fontSize * fontHeightMultiplier[0];
 float fontWidth = fontSize * fontHeightMultiplier[0];
@@ -89,6 +89,7 @@ float sliderRectEnd;
 boolean mouseLockScroll = false;
 boolean mouseLockZoomRight = false;
 boolean mouseLockZoomLeft = false;
+int lastDrawnNumberXpos = 0;
 
 // Search Pannel
 String[] searchPanelText = { 
@@ -183,6 +184,10 @@ int motifOffset = 0;    // Y offset to avoid overlapping motifs
 int motifEnd = 0;    // When to off set
 int motifStart = 0;    // When to offset
 
+// Popup annotation
+String popupData = "";
+boolean popupOn = false;
+
 // Temporary variables
 
 // Main functions
@@ -220,7 +225,9 @@ void draw() {
 
     if (gsStatus == 0) {       
         if (fastaData == "") {
-            displayIntro();
+            if (agi != "") {
+                displayIntro();
+            }
         } else {
             gsStatus = 1;
         }
@@ -265,6 +272,10 @@ void draw() {
         drawTextInputBox();
         drawColumnData();
         //drawPointedRectangle(mouseX, mouseY, 500, "AT1G01010", "-", 128);
+        if ((gffPanelOpen) && (popupOn)) {
+            displaygffMessage(popupData);
+            popupOn = false;
+        }
         if (displayLegend) {
             drawMotifLegend();
         }
@@ -913,7 +924,47 @@ class Digit {
         d_numberBelowDigit();
         d_mouseOver();
     } 
+    //////////////////////////////////////////
+    // draw the identifying numbers below each digit 
+    //////////////////////////////////////////
+    void d_numberBelowDigit() { 
+        int numToDisplay = alnStart + d_index;
+        int displayDigitHowMany = endDigit - startDigit;
+        
+        // This is done so that AT sequence can be displayed
+        d_y = d_y + 12;
+        
+        fill(200);
+        textAlign(CENTER);
+        textFont (helvetica18, 12);
+        if (mouseX > d_x-(d_w/2) && mouseX < d_x+d_w/2 && mouseY > d_y+10 && mouseY < d_y+20) {
+            fill(60);
+        } else {
+            fill(200);
+        }    
 
+        //////////////////////////////////////////
+        // deterimine if we should draw a number or skip based on 
+        //////////////////////////////////////////
+        if (lastDrawnNumberXpos > d_x) {
+                lastDrawnNumberXpos = d_x; // reset if we’re at the beginning of the cycle
+        }
+        pushMatrix();
+        translate(d_x, d_y);
+        if (d_x - lastDrawnNumberXpos > textWidth(numToDisplay)+50 && numToDisplay % 5 == 0) {
+            text(numToDisplay, 0, 20);
+            lastDrawnNumberXpos = d_x;
+        }
+        else if (d_x - lastDrawnNumberXpos > textWidth(numToDisplay)+10 && numToDisplay % 5 == 0) {
+            text(".", 0, 16);
+        }
+
+        popMatrix();
+        
+        d_y = d_y - 12;
+    }
+
+    /*
     //////////////////////////////////////////
     // draw the identifying numbers below each digit 
     //////////////////////////////////////////
@@ -939,27 +990,27 @@ class Digit {
         pushMatrix();
         translate(d_x, d_y);
         //Choose the frequency of numbers to display depending on how many are being displayed
-        if (displayDigitHowMany <= 40) { //if less than 50 display all
+        if (displayDigitHowMany <= 30) { //if less than 30 display all
             text(numToDisplay, 0, 20);
-        } else if (displayDigitHowMany > 40 && displayDigitHowMany <= 200 && (numToDisplay) % 5 == 0) { //if less than 200 display every fifth
+        } else if (displayDigitHowMany > 30 && displayDigitHowMany <= 100 && (numToDisplay) % 5 == 0) { //if less than 100 display every fifth
             text(numToDisplay, 0, 20);
-        } else if (displayDigitHowMany > 200 && displayDigitHowMany <= 500 && (numToDisplay) % 25 == 0) { //if greater than 200 and less than 500 display every twentyfive
+        } else if (displayDigitHowMany > 100 && displayDigitHowMany <= 300 && (numToDisplay) % 25 == 0) { //if greater than 100 and less than 300 display every twentyfive
             text(numToDisplay, 0, 20);
-        } else if (displayDigitHowMany > 40 && displayDigitHowMany <= 150 && (numToDisplay) % 5 != 0) { //if greater than 50 and less than 150, and not divisible by five put dots
+        } else if (displayDigitHowMany > 30 && displayDigitHowMany <= 150 && (numToDisplay) % 5 != 0) { //if greater than 30 and less than 150, and not divisible by five put dots
             text(".", 0, 14);
-        } else if (displayDigitHowMany > 200 && displayDigitHowMany <= 500 && (numToDisplay) % 5 == 0) { //if greater than 200 and less than 500, and not divisible by five put dots
+        } else if (displayDigitHowMany > 150 && displayDigitHowMany <= 300 && (numToDisplay) % 5 == 0) { //if greater than 150 and less than 300, and not divisible by five put dots
             text(".", 0, 14);
-        } else if (displayDigitHowMany > 500 && displayDigitHowMany <= 1600 && (numToDisplay) % 50 == 0) { //if greater than 500 and less than 1600 display every fifty
+        } else if (displayDigitHowMany > 300 && displayDigitHowMany <= 1600 && (numToDisplay) % 50 == 0) { //if greater than 300 and less than 1600 display every fifty
             text(numToDisplay, 0, 20);
         } else if (displayDigitHowMany > 1600 && (numToDisplay) % 100 == 0) { //if greater than 1600 display every hundred
             text(numToDisplay, 0, 20);
-        } else if (displayDigitHowMany > 500 && (numToDisplay) % 25 == 0) { //if greater than 500 put dots every 25
+        } else if (displayDigitHowMany > 300 && (numToDisplay) % 25 == 0) { //if greater than 300 put dots every 25
             text(".", 0, 14);
         }  
         popMatrix();
         
         d_y = d_y - 12;
-    }
+    } */
 
     void d_showNumLettersInColumn() { 
 
@@ -2166,7 +2217,7 @@ void resetData() {
 // Show Introduction
 void displayIntro() {
     String[] msg = {    
-        "Jamie Waese, Asher Pasha & Nicholas Provart\nUniversity of Toronto\n\nVersion 0.901", 
+        "Jamie Waese, Asher Pasha, David Guttman\n& Nicholas Provart\nUniversity of Toronto\n\nVersion 1.0", 
         "Gene Slider visualizes conservation and\n entropy of orthologous DNA and Protein sequences.", 
         "Use it to create one long sequence logo that\n you can zoom in and out of.", 
         "Search for motifs that are hard\n to identify due to wobble and other factors.", 
@@ -2175,19 +2226,19 @@ void displayIntro() {
         "Gene Slider likes citations!",
     };
 
-    if (frameCount < 100) {
+    if (frameCount < 300) {
         displayMessage("Gene Slider", msg[0], 255);
-    } else if (frameCount < 300) {
-        displayMessage("Enter some data to get started.", msg[1], 255);
     } else if (frameCount < 600) {
-        displayMessage("Enter some data to get started.", msg[2], 255);
+        displayMessage("Enter some data to get started.", msg[1], 255);
     } else if (frameCount < 900) {
-        displayMessage("Enter some data to get started.", msg[3], 255);
+        displayMessage("Enter some data to get started.", msg[2], 255);
     } else if (frameCount < 1200) {
-        displayMessage("Enter some data to get started.", msg[4], 255);
+        displayMessage("Enter some data to get started.", msg[3], 255);
     } else if (frameCount < 1800) {
-        displayMessage("Enter some data to get started.", msg[5], 255);
+        displayMessage("Enter some data to get started.", msg[4], 255);
     } else if (frameCount < 2100) {
+        displayMessage("Enter some data to get started.", msg[5], 255);
+    } else if (frameCount < 2400) {
         displayMessage("Enter some data to get started.", msg[6], 255);
     } else {
         frameCount = 101;
@@ -2517,7 +2568,7 @@ void drawSliderBar() {
     // text: start & end points of data file (draw the numbers at the edges)
     textFont (helvetica18, 10);
     fill(128);
-    if (sliderRectStart > sliderBarPaddingFromSide) { // don't show if rectangle is covering
+    if (sliderRectStart > sliderBarPaddingFromSide + 15) { // don't show if rectangle is covering
         textAlign(LEFT); 
         text(str(alnStart), sliderBarPaddingFromSide + 5, sliderBarPaddingFromTop);
     }
@@ -2529,21 +2580,21 @@ void drawSliderBar() {
     // draw the numbers that appear in the slider rectangle
     // starting number
     textAlign(LEFT);
-    if ( textWidth(str(alnStart)) +10 < sliderRectEnd-sliderRectStart) {
+    if ( textWidth(str(alnStart)) +10 + 70< sliderRectEnd-sliderRectStart) {
         fill(128);
         textFont(helvetica18, 12);
         text(startDigit + alnStart, sliderRectStart+5, sliderBarPaddingFromTop);
     }
 
     ///middle lines & number
-    if (displayDigitHowMany >= 100) {
+    if (displayDigitHowMany >= 120) {
         fill(190);
         textFont(helvetica18, 10);
         textAlign(CENTER);
         text(displayDigitHowMany, (sliderRectStart+sliderRectEnd)/2, sliderBarPaddingFromTop);
     }
     //ending number if there's room
-    if ( textWidth( str(endDigit + alnStart) ) + textWidth( str(startDigit + alnStart) ) +10 < sliderRectEnd-sliderRectStart) {
+    if ( textWidth( str(endDigit + alnStart) ) + textWidth( str(startDigit + alnStart) ) +10 + 47 < sliderRectEnd-sliderRectStart) {
         textFont (helvetica18, 12);
         textAlign(RIGHT);  
         fill(128);
@@ -2761,7 +2812,7 @@ void drawAxis() {
             rect(canvasWidth-45, digitY-(i * digitHeight/numSequences * adjustmentForDNAorProtein), 8, -digitHeight/numSequences * 1.5);
         }
     }
-    
+
     // Show AGI if it exits
     if ((gffPanelOpen) && !(searchPanelOpen)) {
         if (agi != "") {
@@ -2771,7 +2822,6 @@ void drawAxis() {
             text("Conservation bit scores across " + numSequences + " species", canvasWidth/2 - 110, 55);
         }
     }
-        
 }
 
 // Rount the two decimal places
@@ -3462,7 +3512,7 @@ void displaygffMessage(String tipText_temp) {
     //////////////////////////////////////////    
 
     // if mouse is close to top of screen, nudge it downwards
-    if (mouseY < 110) {
+    if (mouseY < 200) {
         tooltip_mouseOffsetY = tooltip_textHeight-10;
         tooltip_mouseOffsetX = 10;
     } else {
@@ -3490,7 +3540,7 @@ void displaygffMessage(String tipText_temp) {
     rect(tooltip_currentX, tooltip_currentY-tooltip_textHeight, textWidth(tooltip_tipText)+tooltip_paddingRight, tooltip_textHeight, 3);
 
     // The Triangle
-    if (mouseY < 110) {
+    if (mouseY < 200) {
         beginShape(TRIANGLES);
         vertex(mouseX+10, mouseY-10);
         vertex(mouseX+10, mouseY+10);
@@ -3505,7 +3555,7 @@ void displaygffMessage(String tipText_temp) {
     }
     stroke(255);
     strokeWeight(2);
-    if (mouseY < 110) {
+    if (mouseY < 200) {
         line(mouseX+10, mouseY-9, mouseX+10, mouseY+9);
     } else {
         line(mouseX-9, mouseY-10, mouseX+9, mouseY-10);
@@ -3520,9 +3570,9 @@ void displaygffMessage(String tipText_temp) {
     fill(tooltip_textColor);
     //first part of the text -- up until the word Total:
     if (tooltip_tipText.indexOf("#") == -1) {
-        text(tooltip_tipText, tooltip_currentX+tooltip_paddingLeft, tooltip_currentY-tooltip_textHeight+18);
+        text(tooltip_tipText, tooltip_currentX+tooltip_paddingLeft, tooltip_currentY-tooltip_textHeight+15);
     } else {
-        text(tooltip_tipText.substring(0, tooltip_tipText.indexOf("#")), tooltip_currentX+tooltip_paddingLeft+5, tooltip_currentY-tooltip_textHeight+18);
+        text(tooltip_tipText.substring(0, tooltip_tipText.indexOf("#")), tooltip_currentX+tooltip_paddingLeft+5, tooltip_currentY-tooltip_textHeight+15);
     }
     //After the word Total:, draw each line on its own row, adjust colors accordingly
     int startSlurp=0;
@@ -3646,9 +3696,9 @@ int getIndex(int startx) {
 void addMotifPosition() {
     int JasSize = (int) ((jsonClone.end - jsonClone.start) / 50);
     int[] max = new int[JasSize]; 
-    int i, j, k;
+    int i, j, k, a;
     int JasIndex;
-    
+
     //init array
     for (i = 0; i < max.length; i++) {
         max[i] = 1;
@@ -3670,11 +3720,12 @@ void addMotifPosition() {
             for (k = 0; k < jsonClone.gff[i].data.length; k++) {
                 if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
                     if (jsonClone.gff[i].data[k][0].equals("JASPAR")) {
-                        
+
                         // It will always overlap with itself (!)
                         if ((jsonClone.gff[i].data[j][6] == jsonClone.gff[i].data[k][6]) && (jsonClone.gff[i].data[j][1] == jsonClone.gff[i].data[k][1]) && (jsonClone.gff[i].data[j][2] == jsonClone.gff[i].data[k][2])) {
                             continue;
                         }
+
                         // If overlaps
                         if (checkOverlap(jsonClone.gff[i].data[j][1], jsonClone.gff[i].data[j][2], jsonClone.gff[i].data[k][1], jsonClone.gff[i].data[k][2])) {
                             //println(jsonClone.gff[i].data[j][6] + " " + jsonClone.gff[i].data[k][6]);
@@ -3688,19 +3739,18 @@ void addMotifPosition() {
                     }
                 }
             }
-
-            if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
-                //println(jsonClone.gff[i].data[j][7] + " " + jsonClone.gff[i].data[j][6] + " " + jsonClone.gff[i].data[j][1] + " " + jsonClone.gff[i].data[j][2]);
-            }
         }
     }
-    
+
     // Add the positon of one to all JASPAR
     for (i = 0; i < jsonClone.transcripts; i++) {
         for (j = 0; j < jsonClone.gff[i].data.length; j++) {
             if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
                 if (jsonClone.gff[i].data[j][7] == 0) {
                     jsonClone.gff[i].data[j][7] = 1;
+                }
+                if (jsonClone.gff[i].data[j].length == 9) {
+                    //println(jsonClone.gff[i].data[j][8]);
                 }
             }
         }
@@ -3720,11 +3770,11 @@ void drawMotifLegend() {
     // Figure out the width of the window based on size
     if (hashSize == 0) {
         w = 150;
-    } else if (hashSize <= 12) {
+    } else if (hashSize <= 10) {
         w = 150 + 180;
-    } else if (hashSize <= 24) {
+    } else if (hashSize <= 20) {
         w = 150 + 180 * 2;
-    } else if (hashSize <= 36) {
+    } else if (hashSize <= 30) {
         w = 150 + 180 * 3;
     } else {
         w = 150 + 180 * 4;
@@ -4516,7 +4566,8 @@ void showZoomedGff() {
                             }
                             // GFF info box
                             if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY && mouseY < newY + h)) {
-                                displaygffMessage("Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3]);
+                                popupOn = true;
+                                popupData = "Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3];
                             }
                         }
                     }
@@ -4549,7 +4600,8 @@ void showZoomedGff() {
 
                             // GFF info box
                             if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY && mouseY < newY + h)) {
-                                displaygffMessage("Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3]);
+                                popupOn = true;
+                                popupData = "Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3];
                             }
                         }
                     } else {
@@ -4595,8 +4647,10 @@ void showZoomedGff() {
                         }
 
                         // GFF info box
+
                         if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY - 5 && mouseY < newY + 9)) {
-                            displaygffMessage("Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3] + "\nFD: " + jsonClone.gff[i].data[j][4] + "\nMatch: " + jsonClone.gff[i].data[j][5] + "\nMotif: " + jsonClone.gff[i].data[j][6] + "\n");
+                            popupOn = true;
+                            popupData = "Type: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3] + "\nFD: " + jsonClone.gff[i].data[j][4] + "\nMatch: " + jsonClone.gff[i].data[j][5] + "\nMotif: " + jsonClone.gff[i].data[j][6] + "\n";
                         }
                     } else {
                         fill(255, 220);
@@ -4715,7 +4769,8 @@ void showgffPanel() {
                         }
                         // GFF info box
                         if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY && mouseY < newY + h)) {
-                            displaygffMessage("Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3]);
+                            popupOn = true;
+                            popupData = "Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3];
                         }
                     }
                 }
@@ -4745,7 +4800,8 @@ void showgffPanel() {
                         }
                         // GFF info box
                         if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY && mouseY < newY + h)) {
-                            displaygffMessage("Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3]);
+                            popupOn = true;
+                            popupData = "Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3];
                         }
                     } else {
                         fill(255, 220);
@@ -4755,6 +4811,10 @@ void showgffPanel() {
                 // Draw JASPAR
                 for (j = 0; j < jsonClone.gff[i].data.length; j++) {                
                     if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
+
+                        if (jsonClone.gff[i].data[j][7] == 100) {
+                            continue;
+                        }
 
                         // Get the start and the end
                         startElement = getStartElement(jsonClone.gff[i].data[j][1], jsonClone.start, scale);
@@ -4777,7 +4837,8 @@ void showgffPanel() {
 
                         // GFF info box
                         if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY - 5 && mouseY < newY + 5)) {
-                            displaygffMessage("Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3] + "\nFD: " + jsonClone.gff[i].data[j][4] + "\nMatch: " + jsonClone.gff[i].data[j][5] + "\nMotif: " + jsonClone.gff[i].data[j][6] + "\n");
+                            popupOn = true;
+                            popupData = "Type: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3] + "\nFD: " + jsonClone.gff[i].data[j][4] + "\nMatch: " + jsonClone.gff[i].data[j][5] + "\nMotif: " + jsonClone.gff[i].data[j][6] + "\n";
                         }
                     } else {
                         fill(255, 220);
@@ -4787,6 +4848,5 @@ void showgffPanel() {
         }
     }
 }
-
 
 

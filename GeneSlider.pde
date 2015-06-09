@@ -175,6 +175,7 @@ String agi = "";
 String source = "";
 int before = 0;
 int after = 0;
+boolean showWelcome = true;
 
 // Motifs
 HashMap motifs = new HashMap();    // Hashmap to store motifs and their colors
@@ -225,7 +226,7 @@ void draw() {
 
     if (gsStatus == 0) {       
         if (fastaData == "") {
-            if (agi != "") {
+            if (showWelcome) {
                 displayIntro();
             }
         } else {
@@ -2142,6 +2143,7 @@ void drawGUI() {
 
 // Reset all data
 void resetData() {
+    agi = "AT0G00000";
     gsStatus = 1;
     fastaData = "";
     startDigit = 0;
@@ -4371,6 +4373,10 @@ void setSessionData(String _source, String _agi, int _before, int _after, String
     }
 }
 
+// set welcome
+void setWelcome() {
+    showWelcome = false;
+}
 
 // This function draws a pointed rectangle to represent a gene on GFF pannel
 void drawPointedRectangle(int x, int y, int w, String strand, int shade) {

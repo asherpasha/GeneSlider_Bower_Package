@@ -955,10 +955,9 @@ class Digit {
             text(numToDisplay, 0, 20);
             lastDrawnNumberXpos = d_x;
         }
-        else if (d_x - lastDrawnNumberXpos > textWidth(numToDisplay)+10 && numToDisplay % 5 == 0) {
-            text(".", 0, 16);
-        }
-
+        else if (d_x - lastDrawnNumberXpos > textWidth(numToDisplay) + 10 &&  numToDisplay % 5 == 0) {
+            text(".", -20, 16);
+        }             
         popMatrix();
         
         d_y = d_y - 12;

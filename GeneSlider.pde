@@ -956,8 +956,8 @@ class Digit {
             text(numToDisplay, 0, 20);
             lastDrawnNumberXpos = d_x;
         }
-        else if (d_x - lastDrawnNumberXpos > textWidth(numToDisplay) + 10 &&  numToDisplay % 5 == 0) {
-            text(".", -20, 16);
+        else if (((d_x - lastDrawnNumberXpos) + 5) > textWidth(numToDisplay) + 10 &&  numToDisplay % 5 == 0) {
+            text(".", -15, 16);
         }             
         popMatrix();
         
@@ -2223,7 +2223,6 @@ void displayIntro() {
         "Use it to create one long sequence logo that\n you can zoom in and out of.", 
         "Search for motifs that are hard\n to identify due to wobble and other factors.", 
         "Gene Slider can display\nDNA and Protein FASTA files.", 
-        "...something about the GFF data display...", 
         "Gene Slider likes citations!",
     };
 
@@ -2239,8 +2238,6 @@ void displayIntro() {
         displayMessage("Enter some data to get started.", msg[4], 255);
     } else if (frameCount < 2100) {
         displayMessage("Enter some data to get started.", msg[5], 255);
-    } else if (frameCount < 2400) {
-        displayMessage("Enter some data to get started.", msg[6], 255);
     } else {
         frameCount = 101;
     }
@@ -2818,7 +2815,11 @@ void drawAxis() {
     if ((gffPanelOpen) && !(searchPanelOpen)) {
         if (agi != "") {
             textFont(helvetica18, 28);
+            fill(#BBBBBB);
+            stroke(#BBBBBB);
             text(agi.toUpperCase(), canvasWidth/2 - 55, 30);
+            fill(200);
+            stroke(200);
             textFont(helvetica18, 16);
             text("Conservation bit scores across " + numSequences + " species", canvasWidth/2 - 110, 55);
         }
@@ -3788,7 +3789,7 @@ void drawMotifLegend() {
     stroke(220);
     strokeWeight(5);
     fill(255);
-    rect(x, y, w, h, 20);
+    rect(x - 15, y - 15, w + 15, h + 15, 20);
 
     // Sequence Data
     textAlign(LEFT);    
@@ -3805,7 +3806,7 @@ void drawMotifLegend() {
     text("BR: B. rapa", x + 10, y + 15 * 8);
     text("AA: A. arabicum", x + 10, y + 15 * 9);
     text("EP: E. salsugineum", x + 10, y + 15 * 10);
-    text("BRal: ", x + 10, y + 15 * 11);
+    text("BRal: B. rapa", x + 10, y + 15 * 11);
 
     // Draw Motif Legend
     if (hashSize > 0) {

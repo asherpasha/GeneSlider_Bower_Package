@@ -2821,7 +2821,7 @@ void drawAxis() {
             fill(200);
             stroke(200);
             textFont(helvetica18, 16);
-            text("Conservation bit scores across " + numSequences + " species", canvasWidth/2 - 110, 55);
+            text("Conservation bit scores across 9 species", canvasWidth/2 - 110, 55);
         }
     }
 }
@@ -3762,7 +3762,7 @@ void addMotifPosition() {
 // The popup legend
 void drawMotifLegend() {
     int hashSize = motifs.size();    // Number of motifs
-    int h = (12 * 15) + 8;    // Height of the window
+    int h = (11 * 15) + 8;    // Height of the window
     if (hashSize > 12) {
         h = h + 7;
     } 
@@ -3772,14 +3772,16 @@ void drawMotifLegend() {
     // Figure out the width of the window based on size
     if (hashSize == 0) {
         w = 150;
-    } else if (hashSize <= 10) {
+    } else if (hashSize <= 9) {
         w = 150 + 180;
-    } else if (hashSize <= 20) {
+    } else if (hashSize <= 18) {
         w = 150 + 180 * 2;
-    } else if (hashSize <= 30) {
+    } else if (hashSize <= 27) {
         w = 150 + 180 * 3;
-    } else {
+    } else if (hashSize <= 36) {
         w = 150 + 180 * 4;
+    } else {
+        w = 150 + 180 * 5;
     }
     int x = (width/2) - (w/2);
     int y = (height/2) - (h/2);
@@ -3806,7 +3808,6 @@ void drawMotifLegend() {
     text("BR: B. rapa", x + 10, y + 15 * 8);
     text("AA: A. arabicum", x + 10, y + 15 * 9);
     text("EP: E. salsugineum", x + 10, y + 15 * 10);
-    text("BRal: B. rapa", x + 10, y + 15 * 11);
 
     // Draw Motif Legend
     if (hashSize > 0) {
@@ -3826,7 +3827,7 @@ void drawMotifLegend() {
             fill(#222222);    
             text(me.getKey(), x + 175, y + 15 * count);
             count = count + 1;
-            if (count == 12) {
+            if (count == 11) {
                 x = x + 180;
                 y = (height/2) - (h/2);
                 count = 2;

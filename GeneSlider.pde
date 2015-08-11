@@ -73,8 +73,9 @@ PFont[] font = {
     createFont("Helvetica", fontSize, true), createFont("Times", fontSize, true), createFont("Courier", fontSize, true)
     };
 float[] fontHeightMultiplier = { 
-    .69, .66, .66
+    .72, .67, .58
 };
+
 float fontHeight = fontSize * fontHeightMultiplier[0];
 float fontWidth = fontSize * fontHeightMultiplier[0];
 PFont helvetica18 = createFont("Helvetica", 18, true);
@@ -1763,7 +1764,7 @@ void rectPressed() {
         mousePressed = false;
     } else if (rectButton_share.press()) {
         String query = getQuery();
-        println("Access this view directly using the following link:\n\nhttp://bar.utoronto.ca/~asher/GeneSlider_New/?datasource=" + source + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
+        println("Access this view directly using the following link:\n\nhttp://bar.utoronto.ca/geneslider/?datasource=" + source + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
             + "&weightedBitscore=" + showWeightedBitScore + "&alnIndicator=" + alignmentCountIndicator + query);
         mousePressed = false;
     } else if (rectButton_regulome.press()) {
@@ -3709,7 +3710,7 @@ void addMotifPosition() {
     // Add the positon of one to all JASPAR
     for (i = 0; i < jsonClone.transcripts; i++) {
         for (j = 0; j < jsonClone.gff[i].data.length; j++) {
-            if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
+            if (((jsonClone.gff[i].data[j][0].equals("JASPAR"))  || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014")))) {
                 if (jsonClone.gff[i].data[j].length == 7) {
                     append(jsonClone.gff[i].data[j], 0);
                 }
@@ -3720,8 +3721,8 @@ void addMotifPosition() {
     for (i = 0; i < jsonClone.transcripts; i++) {
         for (j = 0; j < jsonClone.gff[i].data.length; j++) {
             for (k = 0; k < jsonClone.gff[i].data.length; k++) {
-                if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
-                    if (jsonClone.gff[i].data[k][0].equals("JASPAR")) {
+                if ((jsonClone.gff[i].data[j][0].equals("JASPAR"))  || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014"))) {
+                    if ((jsonClone.gff[i].data[k][0].equals("JASPAR"))  || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014"))) {
 
                         // It will always overlap with itself (!)
                         if ((jsonClone.gff[i].data[j][6] == jsonClone.gff[i].data[k][6]) && (jsonClone.gff[i].data[j][1] == jsonClone.gff[i].data[k][1]) && (jsonClone.gff[i].data[j][2] == jsonClone.gff[i].data[k][2])) {
@@ -3747,7 +3748,7 @@ void addMotifPosition() {
     // Add the positon of one to all JASPAR
     for (i = 0; i < jsonClone.transcripts; i++) {
         for (j = 0; j < jsonClone.gff[i].data.length; j++) {
-            if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
+            if ((jsonClone.gff[i].data[j][0].equals("JASPAR"))  || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014"))) {
                 if (jsonClone.gff[i].data[j][7] == 0) {
                     jsonClone.gff[i].data[j][7] = 1;
                 }
@@ -4466,7 +4467,7 @@ String goUpstream() {
     if (JS) {
         String query = getQuery();
         before = before + 1000;
-        String link = "http://bar.utoronto.ca/~asher/GeneSlider_New/?datasource=" + source + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
+        String link = "http://bar.utoronto.ca/geneslider/?datasource=" + source + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
             + "&weightedBitscore=" + showWeightedBitScore + "&alnIndicator=" + alignmentCountIndicator + query;
         return link;
     } else {
@@ -4479,7 +4480,7 @@ String goDownstream() {
     if (JS) {
         String query = getQuery();
         after = after + 1000;
-        String link = "http://bar.utoronto.ca/~asher/GeneSlider_New/?datasource=" + source + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
+        String link = "http://bar.utoronto.ca/geneslider/?datasource=" + source + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
             + "&weightedBitscore=" + showWeightedBitScore + "&alnIndicator=" + alignmentCountIndicator + query;
         return link;
     } else {
@@ -4623,7 +4624,7 @@ void showZoomedGff() {
                 for (j = 0; j < jsonClone.gff[i].data.length; j++) {
                     // Skip the following elements
 
-                    if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
+                    if ((jsonClone.gff[i].data[j][0].equals("JASPAR"))  || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014"))) {
 
                         // Get the start and the end
                         startElement = getStartElement(jsonClone.gff[i].data[j][1], startDigit + alnStart, scale);
@@ -4650,14 +4651,22 @@ void showZoomedGff() {
                             noStroke(red * jasparColorAlpha, green * jasparColorAlpha, blue * jasparColorAlpha);
                             // Get the Y position. Note: This is better than map
                             rect(startElement + x, newY, endElement -  startElement, 9, 10);
+                            
+                            // Text for JASPAR
+                            if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
+                                fill(255);
+                                stroke(255);
+                                textFont (helvetica10, 10); 
+                                text(jsonClone.gff[i].data[j][6].substring(jsonClone.gff[i].data[j][6].indexOf("_") + 1), startElement + x + 4, newY+8);
+                            }
                             stroke(220);
                         }
 
                         // GFF info box
-
+                        
                         if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY - 5 && mouseY < newY + 9)) {
                             popupOn = true;
-                            popupData = "Type: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3] + "\nFD: " + jsonClone.gff[i].data[j][4] + "\nMatch: " + jsonClone.gff[i].data[j][5] + "\nMotif: " + jsonClone.gff[i].data[j][6] + "\n";
+                            popupData = "Type: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3] + "\np-value: " + jsonClone.gff[i].data[j][4] + "\nMatch: " + jsonClone.gff[i].data[j][5] + "\nMotif: " + jsonClone.gff[i].data[j][6] + "\n";
                         }
                     } else {
                         fill(255, 220);
@@ -4817,7 +4826,7 @@ void showgffPanel() {
 
                 // Draw JASPAR
                 for (j = 0; j < jsonClone.gff[i].data.length; j++) {                
-                    if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
+                    if ((jsonClone.gff[i].data[j][0].equals("JASPAR")) || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014"))) {
 
                         if (jsonClone.gff[i].data[j][7] == 100) {
                             continue;
@@ -4845,7 +4854,7 @@ void showgffPanel() {
                         // GFF info box
                         if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY - 5 && mouseY < newY + 5)) {
                             popupOn = true;
-                            popupData = "Type: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3] + "\nFD: " + jsonClone.gff[i].data[j][4] + "\nMatch: " + jsonClone.gff[i].data[j][5] + "\nMotif: " + jsonClone.gff[i].data[j][6] + "\n";
+                            popupData = "Type: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3] + "\np-value: " + jsonClone.gff[i].data[j][4] + "\nMatch: " + jsonClone.gff[i].data[j][5] + "\nMotif: " + jsonClone.gff[i].data[j][6] + "\n";
                         }
                     } else {
                         fill(255, 220);

@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////                          GENE SLIDER                      /////////////////////////////
-///////////////////                         by Jamie Waese                    /////////////////////////////
+///////////////////                        by Jamie Waese,                    /////////////////////////////
+///////////////////                          Asher Pasha,                     /////////////////////////////
 ///////////////////                      and Nicholas Provart                 /////////////////////////////
-///////////////////                 with support from Asher Pasha             /////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // JS or Processing mode
@@ -144,6 +144,7 @@ RoundButton roundButton_textEnter;
 RoundButton roundButton_backspace;
 
 // Rectangle Buttons
+RectButton rectButton_screenGrab;
 RectButton rectButton_font;
 RectButton rectButton_colorScheme;
 RectButton rectButton_alignmentCount;
@@ -1764,7 +1765,7 @@ void rectPressed() {
         mousePressed = false;
     } else if (rectButton_share.press()) {
         String query = getQuery();
-        println("Access this view directly using the following link:\n\nhttp://bar.utoronto.ca/geneslider/?datasource=" + source + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
+        println("Access this view directly using the following link:\n\nhttp://bar.utoronto.ca/~asher/GeneSlider_New/?datasource=" + source + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
             + "&weightedBitscore=" + showWeightedBitScore + "&alnIndicator=" + alignmentCountIndicator + query);
         mousePressed = false;
     } else if (rectButton_regulome.press()) {
@@ -1776,7 +1777,11 @@ void rectPressed() {
     } else if (rectButton_legend.press()) {
         displayLegend = !displayLegend;
         mousePressed = false;
+    } else if (rectButton_screenGrab.press()) {
+        saveScreenGrab();
+        mousePressed = false;
     }
+    
 }
 
 void checkBoxPressed() {
@@ -1990,14 +1995,15 @@ void initializeGUI() {
     int roundButtonTextEnterX = 730;
 
     // Variables for Rectangle Button
-    int rectButtonFontXPosition = 40;
-    int rectButtonColorSchemeXPosition = 85;
-    int rectButtonAlignmentCountXPosition = 136;
-    int rectButtonBottomRow = 480;
+    int rectButtonScreenGrabXPosition = 5;
+    int rectButtonFontXPosition = 95;
+    int rectButtonColorSchemeXPosition = 140;
+    int rectButtonAlignmentCountXPosition = 190;
     int rectButtonBitScoreXPosition = 295;
     int rectButtonShareXPosition = 400;
     int rectButtonRegulomeXPosition = 455;
     int rectButtonLegendXPosition = 575;
+    int rectButtonBottomRow = 480;
 
     // Variables for checkboxes
     int checkBoxXPos = 237;
@@ -2037,9 +2043,10 @@ void initializeGUI() {
     roundButton_backspace         = new RoundButton(roundButtonBackspaceX, roundButtonSearchPanelY, "←", "backspace", "Delete the last character.");
 
     // Rectangle Button
+    rectButton_screenGrab         = new RectButton(rectButtonScreenGrabXPosition, rectButtonBottomRow, "Screen Grab", "Save a hi-res image of this screen");
     rectButton_font               = new RectButton(rectButtonFontXPosition, rectButtonBottomRow, "Font", "Cycle through available fonts");
     rectButton_colorScheme        = new RectButton(rectButtonColorSchemeXPosition, rectButtonBottomRow, "Color", "Cycle through available color schemes");
-    rectButton_alignmentCount     = new RectButton(rectButtonAlignmentCountXPosition, rectButtonBottomRow, "Alignment Indicator mode", "How many genes are aligned in this column? \nToggle between line indicator and saturation views.");
+    rectButton_alignmentCount     = new RectButton(rectButtonAlignmentCountXPosition, rectButtonBottomRow, "Indicator mode", "How many genes are aligned in this column? \nToggle between line indicator and saturation views.");
     rectButton_bitscore           = new RectButton(rectButtonBitScoreXPosition, rectButtonBottomRow, "Bit Score mode", "Scale height according to weighted or normal bitscore.");
     rectButton_share              = new RectButton(rectButtonShareXPosition, rectButtonBottomRow, "Share", "Share link");
     rectButton_regulome           = new RectButton(rectButtonRegulomeXPosition, rectButtonBottomRow, "Link to Regulome", "Open a new window showing Regulome data");
@@ -2083,6 +2090,7 @@ void drawGUI() {
     if (gffPanelOpen) {
         rectButtonBottomRow = 580;
         // Set data
+        rectButton_screenGrab.yPosRB = rectButtonBottomRow;
         rectButton_font.yPosRB = rectButtonBottomRow;
         rectButton_colorScheme.yPosRB = rectButtonBottomRow;
         rectButton_alignmentCount.yPosRB = rectButtonBottomRow;
@@ -2131,14 +2139,17 @@ void drawGUI() {
     //roundButton_cancelSearch.display("");    // Cancel Search
 
     // Draw the Rectangle Buttons
-    rectButton_font.display();
-    rectButton_colorScheme.display();
-    rectButton_alignmentCount.display();
-    rectButton_bitscore.display();
-    if (gffPanelOpen) {
-        rectButton_share.display();
-        rectButton_regulome.display();
-        rectButton_legend.display();
+    if (!screenGrabMode) {
+        rectButton_screenGrab.display();
+        rectButton_font.display();
+        rectButton_colorScheme.display();
+        rectButton_alignmentCount.display();
+        rectButton_bitscore.display();
+        if (gffPanelOpen) {
+            rectButton_share.display();
+            rectButton_regulome.display();
+            rectButton_legend.display();
+        }
     }
 }
 
@@ -2219,12 +2230,12 @@ void resetData() {
 // Show Introduction
 void displayIntro() {
     String[] msg = {    
-        "Jamie Waese, Asher Pasha, David Guttman\n& Nicholas Provart\nUniversity of Toronto\n\nVersion 1.0", 
+        "Jamie Waese, Asher Pasha, David Guttman\n& Nicholas Provart\nUniversity of Toronto\n\nVersion 2.0", 
         "Gene Slider visualizes conservation and\n entropy of orthologous DNA and Protein sequences.", 
         "Use it to create one long sequence logo that\n you can zoom in and out of.", 
         "Search for motifs that are hard\n to identify due to wobble and other factors.", 
         "Gene Slider can display\nDNA and Protein FASTA files.", 
-        "Gene Slider likes citations!",
+        "View conservation of GFF\nand JASPAR motifs.",
     };
 
     if (frameCount < 300) {
@@ -2816,8 +2827,8 @@ void drawAxis() {
     if ((gffPanelOpen) && !(searchPanelOpen)) {
         if (agi != "") {
             textFont(helvetica18, 28);
-            fill(#BBBBBB);
-            stroke(#BBBBBB);
+            fill(60);
+            stroke(60);
             text(agi.toUpperCase(), canvasWidth/2 - 55, 30);
             fill(200);
             stroke(200);
@@ -3844,6 +3855,63 @@ void drawMotifLegend() {
     stroke(220);
 }
 
+boolean screenGrabMode = false;
+/////// DOWNLOAD HI RES SCREEN GRAB
+void saveScreenGrab() {
+  screenGrabMode = true;
+   //println("Saving screen grab..."); 
+
+  int scaleFactor = 5;
+  size(1000 * scaleFactor, 590 * scaleFactor);
+  PGraphics png = createGraphics(1000 * scaleFactor, 590 * scaleFactor); // set screengrab size
+
+  png.beginDraw();
+    scale(scaleFactor);
+    //repeat everything from the draw() cycle 
+  
+    textAlign(CENTER);
+    textFont(helvetica18, 50);
+  
+    // Draw stuff
+    drawGUI();
+    drawDigits();
+    drawSliderBar();
+    drawLegend();
+    drawAxis();
+    if (gffPanelOpen) {
+        showgffPanel();
+        showZoomedGff();
+    }
+    drawSearchPanel();
+    drawTextInputBox();
+    drawColumnData();
+    //drawPointedRectangle(mouseX, mouseY, 500, "AT1G01010", "-", 128);
+    if ((gffPanelOpen) && (popupOn)) {
+        displaygffMessage(popupData);
+        popupOn = false;
+    }
+    if (displayLegend) {
+        drawMotifLegend();
+    }
+
+
+    // add watermark
+    textFont (helvetica18, 10);
+    textAlign(LEFT);
+    fill(#888888);
+    text("Please cite Waese et al., (manuscript in preparation). Gene Slider - http://bar.utoronto.ca/geneslider", 20, 575); 
+  
+  png.endDraw();
+  screenGrabMode = false;
+  save("Gene Slider screengrab.png");
+  
+  //resize back to normal
+  scale(1/scaleFactor);
+  size(1000, 590);
+   
+  
+}
+
 // Files: GSGUI.pde
 ///Rectangular button class
 ///Information to be passed in:
@@ -4467,7 +4535,7 @@ String goUpstream() {
     if (JS) {
         String query = getQuery();
         before = before + 1000;
-        String link = "http://bar.utoronto.ca/geneslider/?datasource=" + source + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
+        String link = "http://bar.utoronto.ca/~asher/GeneSlider_New/?datasource=" + source + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
             + "&weightedBitscore=" + showWeightedBitScore + "&alnIndicator=" + alignmentCountIndicator + query;
         return link;
     } else {
@@ -4480,7 +4548,7 @@ String goDownstream() {
     if (JS) {
         String query = getQuery();
         after = after + 1000;
-        String link = "http://bar.utoronto.ca/geneslider/?datasource=" + source + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
+        String link = "http://bar.utoronto.ca/~asher/GeneSlider_New/?datasource=" + source + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
             + "&weightedBitscore=" + showWeightedBitScore + "&alnIndicator=" + alignmentCountIndicator + query;
         return link;
     } else {
@@ -4575,7 +4643,11 @@ void showZoomedGff() {
                             // GFF info box
                             if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY && mouseY < newY + h)) {
                                 popupOn = true;
-                                popupData = "Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3];
+                                if (jsonClone.gff[i].data[j][3].equals("+")) {
+                                    popupData = "Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3];
+                                } else {
+                                    popupData = "Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][2] + "\nEnd: " + jsonClone.gff[i].data[j][1] + "\nStrand: " + jsonClone.gff[i].data[j][3];
+                                }
                             }
                         }
                     }
@@ -4609,7 +4681,11 @@ void showZoomedGff() {
                             // GFF info box
                             if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY && mouseY < newY + h)) {
                                 popupOn = true;
-                                popupData = "Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3];
+                                if (jsonClone.gff[i].data[j][3].equals("+")) {
+                                    popupData = "Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3];
+                                } else {
+                                    popupData = "Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][2] + "\nEnd: " + jsonClone.gff[i].data[j][1] + "\nStrand: " + jsonClone.gff[i].data[j][3];
+                                }
                             }
                         }
                     } else {
@@ -4651,7 +4727,7 @@ void showZoomedGff() {
                             noStroke(red * jasparColorAlpha, green * jasparColorAlpha, blue * jasparColorAlpha);
                             // Get the Y position. Note: This is better than map
                             rect(startElement + x, newY, endElement -  startElement, 9, 10);
-                            
+
                             // Text for JASPAR
                             if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
                                 fill(255);
@@ -4663,10 +4739,13 @@ void showZoomedGff() {
                         }
 
                         // GFF info box
-                        
                         if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY - 5 && mouseY < newY + 9)) {
                             popupOn = true;
-                            popupData = "Type: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3] + "\np-value: " + jsonClone.gff[i].data[j][4] + "\nMatch: " + jsonClone.gff[i].data[j][5] + "\nMotif: " + jsonClone.gff[i].data[j][6] + "\n";
+                            if (jsonClone.gff[i].data[j][3].equals("+")) {
+                                popupData = "Type: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3] + "\np-value: " + jsonClone.gff[i].data[j][4] + "\nMatch: " + jsonClone.gff[i].data[j][5] + "\nMotif: " + jsonClone.gff[i].data[j][6] + "\n";
+                            } else {
+                                popupData = "Type: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][2] + "\nEnd: " + jsonClone.gff[i].data[j][1] + "\nStrand: " + jsonClone.gff[i].data[j][3] + "\np-value: " + jsonClone.gff[i].data[j][4] + "\nMatch: " + jsonClone.gff[i].data[j][5] + "\nMotif: " + jsonClone.gff[i].data[j][6] + "\n";
+                            }
                         }
                     } else {
                         fill(255, 220);
@@ -4786,7 +4865,11 @@ void showgffPanel() {
                         // GFF info box
                         if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY && mouseY < newY + h)) {
                             popupOn = true;
-                            popupData = "Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3];
+                            if (jsonClone.gff[i].data[j][3].equals("+")) {
+                                popupData = "Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3];
+                            } else {
+                                popupData = "Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][2] + "\nEnd: " + jsonClone.gff[i].data[j][1] + "\nStrand: " + jsonClone.gff[i].data[j][3];
+                            }
                         }
                     }
                 }
@@ -4817,7 +4900,11 @@ void showgffPanel() {
                         // GFF info box
                         if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY && mouseY < newY + h)) {
                             popupOn = true;
-                            popupData = "Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3];
+                            if (jsonClone.gff[i].data[j][3].equals("+")) {
+                                popupData = "Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3];
+                            } else {
+                                popupData = "Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][2] + "\nEnd: " + jsonClone.gff[i].data[j][1] + "\nStrand: " + jsonClone.gff[i].data[j][3];
+                            }
                         }
                     } else {
                         fill(255, 220);
@@ -4854,7 +4941,11 @@ void showgffPanel() {
                         // GFF info box
                         if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY - 5 && mouseY < newY + 5)) {
                             popupOn = true;
-                            popupData = "Type: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3] + "\np-value: " + jsonClone.gff[i].data[j][4] + "\nMatch: " + jsonClone.gff[i].data[j][5] + "\nMotif: " + jsonClone.gff[i].data[j][6] + "\n";
+                            if (jsonClone.gff[i].data[j][3].equals("+")) {
+                                popupData = "Type: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3] + "\np-value: " + jsonClone.gff[i].data[j][4] + "\nMatch: " + jsonClone.gff[i].data[j][5] + "\nMotif: " + jsonClone.gff[i].data[j][6] + "\n";
+                            } else {
+                                popupData = "Type: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][2] + "\nEnd: " + jsonClone.gff[i].data[j][1] + "\nStrand: " + jsonClone.gff[i].data[j][3] + "\np-value: " + jsonClone.gff[i].data[j][4] + "\nMatch: " + jsonClone.gff[i].data[j][5] + "\nMotif: " + jsonClone.gff[i].data[j][6] + "\n";
+                            }
                         }
                     } else {
                         fill(255, 220);

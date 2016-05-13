@@ -186,6 +186,7 @@ boolean displayLegend = false;
 int motifOffset = 0;    // Y offset to avoid overlapping motifs
 int motifEnd = 0;    // When to off set
 int motifStart = 0;    // When to offset
+boolean cistome = false;    // Check if we are comming from cistome
 
 // Popup annotation
 String popupData = "";
@@ -309,11 +310,11 @@ void myMousePressed() {
     if (!JS) {
         fastaData = ">1\nATG\n>2\nATG\n>3\nAAG\n>4\nAAC";
     }
-    
+
     if (displayLegend) {
         displayLegend = false;
     }
-    
+
     // Column Pressed
     columnPressed();
 
@@ -331,7 +332,6 @@ void myMousePressed() {
 
     // Search Panel Checkboxes
     checkBoxPressed();
-    
 }
 
 void mouseMoved() {
@@ -729,9 +729,9 @@ class Digit {
 
         digitColumn = new char[d_digitColumn.length];
         arrayCopy(d_digitColumn, digitColumn);    // The list of letters in the alignment
-        
 
-        
+
+
         // Data processor
         // Calculate unique data
         uniqueDigitsInColumn = calcUniqueData();
@@ -831,7 +831,7 @@ class Digit {
             d_characterBits[i] = new CharacterBit(sortedChars[i], sortedHeights[i]);
             d_thisDigitHeight = d_thisDigitHeight + sortedHeights[i];
         }
-        
+
         // Display AT sequence
         d_characterBitAt = new CharacterBit(digitColumn[0], 1);
     }
@@ -908,7 +908,7 @@ class Digit {
                 d_chColor = color(colorScheme[currentColorScheme][symbols.indexOf(sortedChars[i]) ]);
             }
             d_characterBits[i].ch_display(0 - (d_w/2), superScript, d_w, d_h, d_chColor);
-           if (i == 0) {
+            if (i == 0) {
                 d_characterBitAt.ch_display(0 - (d_w/2), 15, d_w, 5, d_chColor);
             }
             superScript = superScript - (sortedHeights[i] * d_h);
@@ -933,10 +933,10 @@ class Digit {
     void d_numberBelowDigit() { 
         int numToDisplay = alnStart + d_index;
         int displayDigitHowMany = endDigit - startDigit;
-        
+
         // This is done so that AT sequence can be displayed
         d_y = d_y + 12;
-        
+
         fill(200);
         textAlign(CENTER);
         textFont (helvetica18, 12);
@@ -950,69 +950,68 @@ class Digit {
         // deterimine if we should draw a number or skip based on 
         //////////////////////////////////////////
         if (lastDrawnNumberXpos > d_x) {
-                lastDrawnNumberXpos = d_x; // reset if we’re at the beginning of the cycle
+            lastDrawnNumberXpos = d_x; // reset if we’re at the beginning of the cycle
         }
         pushMatrix();
         translate(d_x, d_y);
         if (d_x - lastDrawnNumberXpos > textWidth(numToDisplay)+50 && numToDisplay % 5 == 0) {
             text(numToDisplay, 0, 20);
             lastDrawnNumberXpos = d_x;
-        }
-        else if (((d_x - lastDrawnNumberXpos) + 5) > textWidth(numToDisplay) + 10 &&  numToDisplay % 5 == 0) {
+        } else if (((d_x - lastDrawnNumberXpos) + 5) > textWidth(numToDisplay) + 10 &&  numToDisplay % 5 == 0) {
             text(".", -15, 16);
         }             
         popMatrix();
-        
+
         d_y = d_y - 12;
     }
 
     /*
     //////////////////////////////////////////
-    // draw the identifying numbers below each digit 
-    //////////////////////////////////////////
-    void d_numberBelowDigit() { 
-        int numToDisplay = alnStart + d_index;
-        int displayDigitHowMany = endDigit - startDigit;
-        
-        // This is done so that AT sequence can be displayed
-        d_y = d_y + 12;
-        
-        fill(200);
-        textAlign(CENTER);
-        textFont (helvetica18, 12);
-        if (mouseX > d_x-(d_w/2) && mouseX < d_x+d_w/2 && mouseY > d_y+10 && mouseY < d_y+20) {
-            fill(60);
-        } else {
-            fill(200);
-        }    
-
-        //////////////////////////////////////////
-        // deterimine if we should draw a number, a dot, or skip
-        //////////////////////////////////////////
-        pushMatrix();
-        translate(d_x, d_y);
-        //Choose the frequency of numbers to display depending on how many are being displayed
-        if (displayDigitHowMany <= 30) { //if less than 30 display all
-            text(numToDisplay, 0, 20);
-        } else if (displayDigitHowMany > 30 && displayDigitHowMany <= 100 && (numToDisplay) % 5 == 0) { //if less than 100 display every fifth
-            text(numToDisplay, 0, 20);
-        } else if (displayDigitHowMany > 100 && displayDigitHowMany <= 300 && (numToDisplay) % 25 == 0) { //if greater than 100 and less than 300 display every twentyfive
-            text(numToDisplay, 0, 20);
-        } else if (displayDigitHowMany > 30 && displayDigitHowMany <= 150 && (numToDisplay) % 5 != 0) { //if greater than 30 and less than 150, and not divisible by five put dots
-            text(".", 0, 14);
-        } else if (displayDigitHowMany > 150 && displayDigitHowMany <= 300 && (numToDisplay) % 5 == 0) { //if greater than 150 and less than 300, and not divisible by five put dots
-            text(".", 0, 14);
-        } else if (displayDigitHowMany > 300 && displayDigitHowMany <= 1600 && (numToDisplay) % 50 == 0) { //if greater than 300 and less than 1600 display every fifty
-            text(numToDisplay, 0, 20);
-        } else if (displayDigitHowMany > 1600 && (numToDisplay) % 100 == 0) { //if greater than 1600 display every hundred
-            text(numToDisplay, 0, 20);
-        } else if (displayDigitHowMany > 300 && (numToDisplay) % 25 == 0) { //if greater than 300 put dots every 25
-            text(".", 0, 14);
-        }  
-        popMatrix();
-        
-        d_y = d_y - 12;
-    } */
+     // draw the identifying numbers below each digit 
+     //////////////////////////////////////////
+     void d_numberBelowDigit() { 
+     int numToDisplay = alnStart + d_index;
+     int displayDigitHowMany = endDigit - startDigit;
+     
+     // This is done so that AT sequence can be displayed
+     d_y = d_y + 12;
+     
+     fill(200);
+     textAlign(CENTER);
+     textFont (helvetica18, 12);
+     if (mouseX > d_x-(d_w/2) && mouseX < d_x+d_w/2 && mouseY > d_y+10 && mouseY < d_y+20) {
+     fill(60);
+     } else {
+     fill(200);
+     }    
+     
+     //////////////////////////////////////////
+     // deterimine if we should draw a number, a dot, or skip
+     //////////////////////////////////////////
+     pushMatrix();
+     translate(d_x, d_y);
+     //Choose the frequency of numbers to display depending on how many are being displayed
+     if (displayDigitHowMany <= 30) { //if less than 30 display all
+     text(numToDisplay, 0, 20);
+     } else if (displayDigitHowMany > 30 && displayDigitHowMany <= 100 && (numToDisplay) % 5 == 0) { //if less than 100 display every fifth
+     text(numToDisplay, 0, 20);
+     } else if (displayDigitHowMany > 100 && displayDigitHowMany <= 300 && (numToDisplay) % 25 == 0) { //if greater than 100 and less than 300 display every twentyfive
+     text(numToDisplay, 0, 20);
+     } else if (displayDigitHowMany > 30 && displayDigitHowMany <= 150 && (numToDisplay) % 5 != 0) { //if greater than 30 and less than 150, and not divisible by five put dots
+     text(".", 0, 14);
+     } else if (displayDigitHowMany > 150 && displayDigitHowMany <= 300 && (numToDisplay) % 5 == 0) { //if greater than 150 and less than 300, and not divisible by five put dots
+     text(".", 0, 14);
+     } else if (displayDigitHowMany > 300 && displayDigitHowMany <= 1600 && (numToDisplay) % 50 == 0) { //if greater than 300 and less than 1600 display every fifty
+     text(numToDisplay, 0, 20);
+     } else if (displayDigitHowMany > 1600 && (numToDisplay) % 100 == 0) { //if greater than 1600 display every hundred
+     text(numToDisplay, 0, 20);
+     } else if (displayDigitHowMany > 300 && (numToDisplay) % 25 == 0) { //if greater than 300 put dots every 25
+     text(".", 0, 14);
+     }  
+     popMatrix();
+     
+     d_y = d_y - 12;
+     } */
 
     void d_showNumLettersInColumn() { 
 
@@ -1765,7 +1764,7 @@ void rectPressed() {
         mousePressed = false;
     } else if (rectButton_share.press()) {
         String query = getQuery();
-        println("Access this view directly using the following link:\n\nhttp://bar.utoronto.ca/~asher/GeneSlider_New/?datasource=" + source + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
+        println("Access this view directly using the following link:\n\nhttp://bar.utoronto.ca/geneslider/?datasource=" + source + "&cistome=" + cistome + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
             + "&weightedBitscore=" + showWeightedBitScore + "&alnIndicator=" + alignmentCountIndicator + query);
         mousePressed = false;
     } else if (rectButton_regulome.press()) {
@@ -1773,7 +1772,7 @@ void rectPressed() {
         int end = endDigit + alnStart;
         String url = "https://genome.htseq.org/~plantregulome/cgi-bin/hgTracks?db=TAIR9&position=Chr" + agi.charAt(2) + "%3A" + start + "-" + end + "&pix=896";
         window.open(url, "Regulome", "toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=1000, height=400");
-        mousePressed = false; 
+        mousePressed = false;
     } else if (rectButton_legend.press()) {
         displayLegend = !displayLegend;
         mousePressed = false;
@@ -1781,7 +1780,6 @@ void rectPressed() {
         saveScreenGrab();
         mousePressed = false;
     }
-    
 }
 
 void checkBoxPressed() {
@@ -2112,7 +2110,7 @@ void drawGUI() {
 
     // Draw the Triangles
     strokeWeight(1);    
-    stroke(#E1E1E1);
+    stroke(#AAAAAA);
     line(homeTriangleButtonPaddingFromSide-homeTriangleButtonWidth, homeTriangleButtonDistanceFromTop, homeTriangleButtonPaddingFromSide-homeTriangleButtonWidth, homeTriangleButtonDistanceFromTop-homeTriangleButtonHeight);
     triButton_jumpToStart.display();
 
@@ -2126,7 +2124,7 @@ void drawGUI() {
 
     //triangle button: advance to end
     strokeWeight(1);
-    stroke(#E1E1E1);
+    stroke(#AAAAAA);
     line(width-homeTriangleButtonPaddingFromSide+homeTriangleButtonWidth, homeTriangleButtonDistanceFromTop, width-homeTriangleButtonPaddingFromSide+homeTriangleButtonWidth, homeTriangleButtonDistanceFromTop-homeTriangleButtonHeight);
     triButton_jumpToEnd.display();
 
@@ -2655,7 +2653,7 @@ void drawLegend() {
 
     // Color Legend
     strokeWeight(1);
-    stroke(#E1E1E1);
+    stroke(#AAAAAA);
     rectMode(CORNER);
     textFont (helvetica18, 10);
     textAlign(LEFT);
@@ -3222,7 +3220,7 @@ void outer_rect( float x, float y, float w, float h, color strokeCol, color fill
 void drawColumnData() {
     color strokeColor = #BBBBBB;
     color textColor = #333333;
-    color guiStrokeColor = #E1E1E1;
+    color guiStrokeColor = #AAAAAA;
     String symbols = "AGCTNXRY-BDEFGHIJKLMOPQSUVWZ*";
     String columnData = "";
 
@@ -3858,20 +3856,20 @@ void drawMotifLegend() {
 boolean screenGrabMode = false;
 /////// DOWNLOAD HI RES SCREEN GRAB
 void saveScreenGrab() {
-  screenGrabMode = true;
-   //println("Saving screen grab..."); 
+    screenGrabMode = true;
+    //println("Saving screen grab..."); 
 
-  int scaleFactor = 5;
-  size(1000 * scaleFactor, 590 * scaleFactor);
-  PGraphics png = createGraphics(1000 * scaleFactor, 590 * scaleFactor); // set screengrab size
+    int scaleFactor = 5;
+    size(1000 * scaleFactor, 590 * scaleFactor);
+    PGraphics png = createGraphics(1000 * scaleFactor, 590 * scaleFactor); // set screengrab size
 
-  png.beginDraw();
+    png.beginDraw();
     scale(scaleFactor);
     //repeat everything from the draw() cycle 
-  
+
     textAlign(CENTER);
     textFont(helvetica18, 50);
-  
+
     // Draw stuff
     drawGUI();
     drawDigits();
@@ -3900,16 +3898,14 @@ void saveScreenGrab() {
     textAlign(LEFT);
     fill(#888888);
     text("Please cite Waese et al., (manuscript in preparation). Gene Slider - http://bar.utoronto.ca/geneslider", 20, 575); 
-  
-  png.endDraw();
-  screenGrabMode = false;
-  save("Gene Slider screengrab.png");
-  
-  //resize back to normal
-  scale(1/scaleFactor);
-  size(1000, 590);
-   
-  
+
+    png.endDraw();
+    screenGrabMode = false;
+    save("Gene Slider screengrab.png");
+
+    //resize back to normal
+    scale(1/scaleFactor);
+    size(1000, 590);
 }
 
 // Files: GSGUI.pde
@@ -4427,7 +4423,7 @@ void setFastaData(String data) {
 }
 
 // Set session data
-void setSessionData(String _source, String _agi, int _before, int _after, String _bitscore, String _alnIndicator) {
+void setSessionData(String _source, String _agi, int _before, int _after, String _bitscore, String _alnIndicator, String _cistome) {
     source = _source;
     agi = _agi;
     before = _before;
@@ -4442,6 +4438,11 @@ void setSessionData(String _source, String _agi, int _before, int _after, String
     } else {
         alignmentCountIndicator = false;
     }
+    if (_cistome.equals("true")) {
+        cistome = true;
+    } else {
+        cistome = false;
+    }
 }
 
 // set welcome
@@ -4452,9 +4453,9 @@ void setWelcome() {
 // This function draws a pointed rectangle to represent a gene on GFF pannel
 void drawPointedRectangle(int x, int y, int w, String strand, int shade) {
     int h = 12;    // The height for these boxes
-    fill(shade, 220);
+    fill(shade);
     strokeWeight(2);
-    stroke(220);
+    stroke(#AAAAAA);
     textFont (helvetica18, 12); 
     // For positive strand
     if (strand.equals("+")) {
@@ -4478,7 +4479,7 @@ void drawPointedRectangle(int x, int y, int w, String strand, int shade) {
     }
     fill(255, 220);
     strokeWeight(2);
-    stroke(220);
+    stroke(#AAAAAA);
 }
 
 // Set search data
@@ -4535,7 +4536,7 @@ String goUpstream() {
     if (JS) {
         String query = getQuery();
         before = before + 1000;
-        String link = "http://bar.utoronto.ca/~asher/GeneSlider_New/?datasource=" + source + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
+        String link = "http://bar.utoronto.ca/geneslider/?datasource=" + source + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
             + "&weightedBitscore=" + showWeightedBitScore + "&alnIndicator=" + alignmentCountIndicator + query;
         return link;
     } else {
@@ -4548,7 +4549,7 @@ String goDownstream() {
     if (JS) {
         String query = getQuery();
         after = after + 1000;
-        String link = "http://bar.utoronto.ca/~asher/GeneSlider_New/?datasource=" + source + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
+        String link = "http://bar.utoronto.ca/geneslider/?datasource=" + source + "&agi=" + agi + "&before=" + before + "&after=" + after + "&zoom_from=" + startDigit + "&zoom_to=" + endDigit
             + "&weightedBitscore=" + showWeightedBitScore + "&alnIndicator=" + alignmentCountIndicator + query;
         return link;
     } else {
@@ -4579,9 +4580,9 @@ void showZoomedGff() {
 
     if (gffPanelOpen) {
         // The main rectange
-        fill(255, 220);
+        fill(255);
         strokeWeight(2);
-        stroke(220);
+        stroke(#AAAAAA);
         a = canvasWidth - (sliderBarPaddingFromSide * 2);
         b = 80;
         x = sliderBarPaddingFromSide;
@@ -4612,7 +4613,7 @@ void showZoomedGff() {
                         if (endElement > startElement) {
                             // Get the Y position. Note: This is better than map
                             newY = y + offset * (b/(float(jsonClone.maxTranscript) + 2));
-                            fill(255, 220);
+                            fill(#AAAAAA);
                             rect(startElement + x, newY + h/2 -1, endElement - startElement, 1);
                         }
                     }
@@ -4631,7 +4632,7 @@ void showZoomedGff() {
 
                         if (endElement > startElement) {
                             // Get the Y position. Note: This is better than map
-                            fill(255, 220);
+                            fill(255);
                             newY = y + offset * (b/(float(jsonClone.maxTranscript) + 2));
                             if (jsonClone.gff[i].data[j][3].equals("+") && points[i] == jsonClone.gff[i].data[j][2] ) {
                                 drawPointedRectangle(startElement + x, newY, endElement - startElement, "+", 255);
@@ -4669,7 +4670,7 @@ void showZoomedGff() {
                             // Get the Y position. Note: This is better than map
                             newY = y + offset * (b/(float(jsonClone.maxTranscript) + 2));
 
-                            fill(220, 220);
+                            fill(#AAAAAA);
                             if (jsonClone.gff[i].data[j][3].equals("+") && points[i] == jsonClone.gff[i].data[j][2] ) {
                                 drawPointedRectangle(startElement + x, newY, endElement - startElement, "+", 220);
                             } else if (jsonClone.gff[i].data[j][3].equals("-") && points[i] == jsonClone.gff[i].data[j][1]) {
@@ -4709,33 +4710,40 @@ void showZoomedGff() {
                         if (endElement > startElement) {
 
                             // Set motif offset
-                            motifOffset = jsonClone.gff[i].data[j][7] * 10;
+                            motifOffset = jsonClone.gff[i].data[j][7] * 6;
 
                             motifEnd = endElement;
                             motifStart = startElement;
                             newY = y + 10 + motifOffset;  
 
-                            float value = parseFloat(jsonClone.gff[i].data[j][4]);
-                            float jasparColorAlpha = (int)((value * 10 + 0.5))/10.0;
-                            String jasparColor = getColor(jsonClone.gff[i].data[j][6]);
-                            jasparColorAlpha = map(jasparColorAlpha, 0, 1, -1, -0.5);
-                            jasparColorAlpha = abs(jasparColorAlpha);
-                            int red = 255 - unhex(jasparColor.substring(1, 3));
-                            int green = 255 - unhex(jasparColor.substring(3, 5));
-                            int blue = 255 - unhex(jasparColor.substring(5, 7));
-                            fill(red * jasparColorAlpha, green * jasparColorAlpha, blue * jasparColorAlpha);
-                            noStroke(red * jasparColorAlpha, green * jasparColorAlpha, blue * jasparColorAlpha);
+                            if (cistome) {
+                                fill(#AAAAAA);
+                                noStroke();
+                            } else {
+                                float value = parseFloat(jsonClone.gff[i].data[j][4]);
+                                float jasparColorAlpha = (int)((value * 10 + 0.5))/10.0;
+                                String jasparColor = getColor(jsonClone.gff[i].data[j][6]);
+                                jasparColorAlpha = map(jasparColorAlpha, 0, 1, -1, -0.5);
+                                jasparColorAlpha = abs(jasparColorAlpha);
+                                int red = 255 - unhex(jasparColor.substring(1, 3));
+                                int green = 255 - unhex(jasparColor.substring(3, 5));
+                                int blue = 255 - unhex(jasparColor.substring(5, 7));
+                                fill(red * jasparColorAlpha, green * jasparColorAlpha, blue * jasparColorAlpha);
+                                noStroke(red * jasparColorAlpha, green * jasparColorAlpha, blue * jasparColorAlpha);
+                            }
                             // Get the Y position. Note: This is better than map
-                            rect(startElement + x, newY, endElement -  startElement, 9, 10);
+                            rect(startElement + x, newY, endElement -  startElement, 5, 5);
 
                             // Text for JASPAR
+                            /*
                             if (jsonClone.gff[i].data[j][0].equals("JASPAR")) {
-                                fill(255);
-                                stroke(255);
-                                textFont (helvetica10, 10); 
-                                text(jsonClone.gff[i].data[j][6].substring(jsonClone.gff[i].data[j][6].indexOf("_") + 1), startElement + x + 4, newY+8);
-                            }
-                            stroke(220);
+                             fill(255);
+                             stroke(255);
+                             textFont (helvetica10, 10); 
+                             text(jsonClone.gff[i].data[j][6].substring(jsonClone.gff[i].data[j][6].indexOf("_") + 1), startElement + x + 4, newY+8);
+                             }
+                             */
+                            stroke(#AAAAAA);
                         }
 
                         // GFF info box
@@ -4784,8 +4792,8 @@ void showgffPanel() {
     }
 
     // Text
-    fill(200);
-    stroke(200);
+    fill(#AAAAAA);
+    stroke(#AAAAAA);
     textAlign(RIGHT);
     textFont (helvetica10, 10); 
     text("GFF", sliderBarPaddingFromSide - 10, sliderBarPaddingFromTop + 35);
@@ -4793,9 +4801,9 @@ void showgffPanel() {
     if (gffPanelOpen) {
         //rectButtonBottomRow = 580;    
         // The main rectange
-        fill(255, 220);
+        fill(255);
         strokeWeight(2);
-        stroke(220);
+        stroke(#AAAAAA);
         a = canvasWidth - (sliderBarPaddingFromSide * 2);
         b = 120;
         x = sliderBarPaddingFromSide;
@@ -4827,12 +4835,12 @@ void showgffPanel() {
                         }
 
                         // draw line
-                        fill(255, 220);
+                        fill(255);
                         rect(startElement + x, newY + h/2 -1, endElement - startElement, 1);
                     }
                     if (jsonClone.gff[i].data[j][0].equals("gene")) {
                         startElement = getStartElement(jsonClone.gff[i].data[j][1], jsonClone.start, scale);
-                        fill(128, 220);
+                        fill(#AAAAAA);
                         textAlign(LEFT);
                         textFont(helvetica18, 12);
                         newY = y + 1 * (b/(float(jsonClone.maxTranscript) + 2));
@@ -4854,7 +4862,8 @@ void showgffPanel() {
                         // Get the Y position. Note: This is better than map
                         newY = y + offset * (b/(float(jsonClone.maxTranscript) + 2));
 
-                        fill(255, 220);
+                        fill(255);
+                        stroke(#AAAAAA);
                         if (jsonClone.gff[i].data[j][3].equals("+") && points[i] == jsonClone.gff[i].data[j][2] ) {
                             drawPointedRectangle(startElement + x, newY, endElement - startElement, "+", 255);
                         } else if (jsonClone.gff[i].data[j][3].equals("-") && points[i] == jsonClone.gff[i].data[j][1]) {
@@ -4889,7 +4898,7 @@ void showgffPanel() {
                         // Get the Y position. Note: This is better than map
                         newY = y + offset * (b/(float(jsonClone.maxTranscript) + 2));
 
-                        fill(220, 220);
+                        fill(#AAAAAA);
                         if (jsonClone.gff[i].data[j][3].equals("+") && points[i] == jsonClone.gff[i].data[j][2] ) {
                             drawPointedRectangle(startElement + x, newY, endElement - startElement, "+", 220);
                         } else if (jsonClone.gff[i].data[j][3].equals("-") && points[i] == jsonClone.gff[i].data[j][1]) {
@@ -4907,7 +4916,7 @@ void showgffPanel() {
                             }
                         }
                     } else {
-                        fill(255, 220);
+                        fill(255);
                     }
                 }
 
@@ -4925,18 +4934,23 @@ void showgffPanel() {
 
                         // Get the Y position. Note: This is better than map
                         newY = y + 20;
-                        float value = parseFloat(jsonClone.gff[i].data[j][4]);
-                        float jasparColorAlpha = (int)((value * 10 + 0.5))/10.0;
-                        String jasparColor = getColor(jsonClone.gff[i].data[j][6]);
-                        jasparColorAlpha = map(jasparColorAlpha, 0, 1, -1, -0.5);
-                        jasparColorAlpha = abs(jasparColorAlpha);
-                        int red = 255 - unhex(jasparColor.substring(1, 3));
-                        int green = 255 - unhex(jasparColor.substring(3, 5));
-                        int blue = 255 - unhex(jasparColor.substring(5, 7));
-                        stroke(red * jasparColorAlpha, green * jasparColorAlpha, blue * jasparColorAlpha);
-                        fill(red * jasparColorAlpha, green * jasparColorAlpha, blue * jasparColorAlpha);
+                        if (cistome) {
+                            fill(#AAAAAA);
+                            stroke(#AAAAAA);
+                        } else {
+                            float value = parseFloat(jsonClone.gff[i].data[j][4]);
+                            float jasparColorAlpha = (int)((value * 10 + 0.5))/10.0;
+                            String jasparColor = getColor(jsonClone.gff[i].data[j][6]);
+                            jasparColorAlpha = map(jasparColorAlpha, 0, 1, -1, -0.5);
+                            jasparColorAlpha = abs(jasparColorAlpha);
+                            int red = 255 - unhex(jasparColor.substring(1, 3));
+                            int green = 255 - unhex(jasparColor.substring(3, 5));
+                            int blue = 255 - unhex(jasparColor.substring(5, 7));
+                            stroke(red * jasparColorAlpha, green * jasparColorAlpha, blue * jasparColorAlpha);
+                            fill(red * jasparColorAlpha, green * jasparColorAlpha, blue * jasparColorAlpha);
+                        }
                         ellipse(startElement + x, newY, 5, 5);
-                        stroke(220);
+                        stroke(#AAAAAA);
 
                         // GFF info box
                         if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY - 5 && mouseY < newY + 5)) {

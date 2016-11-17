@@ -24,6 +24,9 @@ String[] fastaHeaders;
 int horizontalBarWidth = 876;
 int horizontalBarHeight = 20;
 PImage horizontalBar;
+boolean cursorHand = false;
+boolean cursorMove = false;
+String fastaLabel = "";
 
 // Canvas Data
 float canvasWidth = 1000;
@@ -70,7 +73,7 @@ color[][] colorScheme = {
 };
 float fontSize = 50;
 PFont[] font = { 
-    createFont("Helvetica", fontSize, true), createFont("Times", fontSize, true), createFont("Courier", fontSize, true)
+    createFont("HelveticaNeue", fontSize, true), createFont("Times", fontSize, true), createFont("Courier", fontSize, true)
     };
 float[] fontHeightMultiplier = { 
     .72, .67, .58
@@ -216,6 +219,8 @@ void draw() {
     //println(frameRate);
     //println(gsStatus);
     // Clear screen
+    cursorHand = false;
+    cursorMove = false; 
 
     background(255);
     // Mouse down function, which processing doesn't have
@@ -236,6 +241,8 @@ void draw() {
             gsStatus = 1;
         }
     } else if (gsStatus == 1) {
+        displayIntro();
+
         // Define some variables
         searchString = new char[6][8];
         searchValue = new float[6][8];
@@ -291,6 +298,16 @@ void draw() {
         }
     } else {
         println("Weird program gsStatus.");
+    }
+
+    if (cursorHand) {
+        cursor(HAND);
+    }
+    else if (cursorMove) {
+        cursor(MOVE);
+    }
+    else {
+        cursor(ARROW);
     }
 }
 
@@ -360,9 +377,17 @@ void mouseReleased() {
     gsStatus = 10;
     updateSearchResults();
     redraw();
+    
+    cursor(ARROW);
+    cursorMove = false;
+    cursorHand = false;
 }
 
 void mouseDragged() {
+    cursorHand = false;
+    cursorMove = true;
+    cursor(MOVE);
+
     //// try to prevent wild errors if mouse goes out of bounds :(
     int nextMove;    // This will fix some weird slider moves
     float searchBottom=105 + 35; 
@@ -443,6 +468,26 @@ void mouseDragged() {
                     if (nextMove > endDigit) {
                         endDigit = nextMove;
                     }
+                }
+            }
+        }
+
+        //JW: DRAG MOUSE ON SCREEN TO SLIDE EVERYTHING: If mouse isn't over scrollbar, side the whole display left or right
+        if (!displayColumnData) {
+            if (!mouseLockScroll && !mouseLockZoomRight && !mouseLockZoomLeft) {
+                int moveDistance = pmouseX-mouseX;
+                int previousStartDigit = startDigit;
+                startDigit += moveDistance;
+                endDigit = startDigit + displayDigitHowMany;
+
+                if (startDigit < 0) {
+                    startDigit = 0;
+                    endDigit = startDigit + displayDigitHowMany;
+                }
+
+                if (endDigit >= numNucleotides) {
+                    endDigit = numNucleotides;
+                    startDigit = numNucleotides - displayDigitHowMany -1;
                 }
             }
         }
@@ -909,6 +954,12 @@ class Digit {
             }
             d_characterBits[i].ch_display(0 - (d_w/2), superScript, d_w, d_h, d_chColor);
             if (i == 0) {
+            //determine color mode
+                if (!alignmentCountIndicator) {
+                    d_chColor = color(colorScheme[currentColorScheme][symbols.indexOf(d_characterBitAt.ch_letter)], map(numLettersInColumn, 1, numSequences, 40, 255)); //scale color opacity according to num letters in column
+                } else {
+                    d_chColor = color(colorScheme[currentColorScheme][symbols.indexOf(d_characterBitAt.ch_letter)]);
+                }    
                 d_characterBitAt.ch_display(0 - (d_w/2), 15, d_w, 5, d_chColor);
             }
             superScript = superScript - (sortedHeights[i] * d_h);
@@ -950,7 +1001,7 @@ class Digit {
         // deterimine if we should draw a number or skip based on 
         //////////////////////////////////////////
         if (lastDrawnNumberXpos > d_x) {
-            lastDrawnNumberXpos = d_x; // reset if we’re at the beginning of the cycle
+            lastDrawnNumberXpos = d_x; // reset if we're at the beginning of the cycle
         }
         pushMatrix();
         translate(d_x, d_y);
@@ -965,53 +1016,6 @@ class Digit {
         d_y = d_y - 12;
     }
 
-    /*
-    //////////////////////////////////////////
-     // draw the identifying numbers below each digit 
-     //////////////////////////////////////////
-     void d_numberBelowDigit() { 
-     int numToDisplay = alnStart + d_index;
-     int displayDigitHowMany = endDigit - startDigit;
-     
-     // This is done so that AT sequence can be displayed
-     d_y = d_y + 12;
-     
-     fill(200);
-     textAlign(CENTER);
-     textFont (helvetica18, 12);
-     if (mouseX > d_x-(d_w/2) && mouseX < d_x+d_w/2 && mouseY > d_y+10 && mouseY < d_y+20) {
-     fill(60);
-     } else {
-     fill(200);
-     }    
-     
-     //////////////////////////////////////////
-     // deterimine if we should draw a number, a dot, or skip
-     //////////////////////////////////////////
-     pushMatrix();
-     translate(d_x, d_y);
-     //Choose the frequency of numbers to display depending on how many are being displayed
-     if (displayDigitHowMany <= 30) { //if less than 30 display all
-     text(numToDisplay, 0, 20);
-     } else if (displayDigitHowMany > 30 && displayDigitHowMany <= 100 && (numToDisplay) % 5 == 0) { //if less than 100 display every fifth
-     text(numToDisplay, 0, 20);
-     } else if (displayDigitHowMany > 100 && displayDigitHowMany <= 300 && (numToDisplay) % 25 == 0) { //if greater than 100 and less than 300 display every twentyfive
-     text(numToDisplay, 0, 20);
-     } else if (displayDigitHowMany > 30 && displayDigitHowMany <= 150 && (numToDisplay) % 5 != 0) { //if greater than 30 and less than 150, and not divisible by five put dots
-     text(".", 0, 14);
-     } else if (displayDigitHowMany > 150 && displayDigitHowMany <= 300 && (numToDisplay) % 5 == 0) { //if greater than 150 and less than 300, and not divisible by five put dots
-     text(".", 0, 14);
-     } else if (displayDigitHowMany > 300 && displayDigitHowMany <= 1600 && (numToDisplay) % 50 == 0) { //if greater than 300 and less than 1600 display every fifty
-     text(numToDisplay, 0, 20);
-     } else if (displayDigitHowMany > 1600 && (numToDisplay) % 100 == 0) { //if greater than 1600 display every hundred
-     text(numToDisplay, 0, 20);
-     } else if (displayDigitHowMany > 300 && (numToDisplay) % 25 == 0) { //if greater than 300 put dots every 25
-     text(".", 0, 14);
-     }  
-     popMatrix();
-     
-     d_y = d_y - 12;
-     } */
 
     void d_showNumLettersInColumn() { 
 
@@ -1123,7 +1127,7 @@ class Digit {
             }
         }
         //rect(dm_x, dm_y+10, dm_w, -dm_digitHeight*2-10);
-        rect(dm_x, dm_y, 2, 10);
+        rect(dm_x, dm_y, 2, 15);
         rectMode(CORNER);
     }
 
@@ -1288,6 +1292,8 @@ class Digit {
         }
         if (mouseX > d_x-(d_w/2) && mouseX < d_x+(d_w/2) && mouseY < d_y && mouseY > d_y-(d_h*adjustmentForDNAorProtein*.85)) { 
             d_mouseOverFlag = true;
+            cursorHand = true;
+
         } else {
             d_mouseOverFlag = false;
         }
@@ -1359,6 +1365,8 @@ class SearchDigit {
             mouseOverButton = "searchDigitControlBar" + sd_indexNumber;
             buttonLock="searchDigitControlBar" + sd_indexNumber;
             mouseOverSD = true;
+            cursorHand = true;
+
         } else if (sd_value == 0) {
             fill(lerpColor(digitBackground[currentSearchPanel+1], #FFFFFF, .6));
             mouseOverSD = true;
@@ -1447,6 +1455,7 @@ class SearchDigit {
                             sd_letter = sd_searchLettersDNA[i]; 
                             searchString[currentSearchPanel][sd_indexNumber]=sd_letter;
                         }
+                        cursorHand = true;
                     } else { 
                         fill(200);
                         textFont(helvetica18, 10);
@@ -1469,13 +1478,14 @@ class SearchDigit {
                             sd_letter = sd_searchLettersDNA[i]; 
                             searchString[currentSearchPanel][sd_indexNumber]=sd_letter;
                         }
+                        cursorHand = true;
                     } else { 
                         fill(200);
                         textFont(helvetica18, 10);
                         sd_mouseOverLetter = '\u0000';
                     }
                 }
-                text(sd_searchLettersDNA[i], sd_x+(sd_w/4*(i-sd_DNALettersStart)*1.2)+(sd_w/8), sd_y+10);
+                text(sd_searchLettersDNA[i], sd_x+(sd_w/4*(i-sd_DNALettersStart)*1.2)+(sd_w/8), sd_y+13);
             }
         }
 
@@ -1500,6 +1510,7 @@ class SearchDigit {
                             sd_letter = sd_searchLettersProtein[i]; 
                             searchString[currentSearchPanel][sd_indexNumber]=sd_letter;
                         }
+                        cursorHand = true;
                     } else {
                         fill(200);
                         textFont(helvetica18, 10);
@@ -1521,6 +1532,7 @@ class SearchDigit {
                             sd_letter = sd_searchLettersProtein[i]; 
                             searchString[currentSearchPanel][sd_indexNumber]=sd_letter;
                         }
+                        cursorHand = true;
                     } else {
                         fill(200);
                         textFont(helvetica18, 10);
@@ -1543,6 +1555,7 @@ class SearchDigit {
                             sd_letter = sd_searchLettersProtein[i]; 
                             searchString[currentSearchPanel][sd_indexNumber]=sd_letter;
                         }
+                        cursorHand = true;
                     } else {
                         fill(200);
                         textFont(helvetica18, 10);
@@ -1565,6 +1578,7 @@ class SearchDigit {
                             sd_letter = sd_searchLettersProtein[i]; 
                             searchString[currentSearchPanel][sd_indexNumber]=sd_letter;
                         }
+                        cursorHand = true;
                     } else {
                         fill(200);
                         textFont(helvetica18, 10);
@@ -1665,6 +1679,7 @@ void slideSeq() {
     ////-Button-//////// Slider Bar  - Click to reset rectangle to that area ////////-Button
     else if (mouseLockScroll == false && mouseLockZoomLeft == false && mouseLockZoomRight == false) { 
         if ( (mouseY < sliderBarPaddingFromTop+20 && mouseY > sliderBarPaddingFromTop-20) && !(( (mouseX > sliderRectStart-15 && mouseX < sliderRectStart+2) && (mouseY > sliderBarPaddingFromTop-15 && mouseY < sliderBarPaddingFromTop+5)) || ((mouseX > sliderRectEnd-2 && mouseX < sliderRectEnd+15) && (mouseY > sliderBarPaddingFromTop-15 && mouseY < sliderBarPaddingFromTop+5)) )) {
+
             int displayDigitHowMany = endDigit - startDigit;
             // if resetting position wouldn't push the start or end past the edge
             if ( (int(map( mouseX, sliderBarPaddingFromSide, canvasWidth-sliderBarPaddingFromSide, 0, numNucleotides))-int(displayDigitHowMany/2)) > 0
@@ -2163,7 +2178,8 @@ void resetData() {
     alignmentCountIndicator = false;
     showWeightedBitScore = true;
     gffPanelOpen = false;
-
+    frameCount = 0;
+    fastaLabel = "";
     currentFont = 0;
     searchPanelOpen = false;
     currentSearchPanel=0;
@@ -2227,120 +2243,41 @@ void resetData() {
 
 // Show Introduction
 void displayIntro() {
-    String[] msg = {    
-        "Jamie Waese, Asher Pasha, David Guttman\n& Nicholas Provart\nUniversity of Toronto\n\nVersion 2.0", 
-        "Gene Slider visualizes conservation and\n entropy of orthologous DNA and Protein sequences.", 
-        "Use it to create one long sequence logo that\n you can zoom in and out of.", 
-        "Search for motifs that are hard\n to identify due to wobble and other factors.", 
-        "Gene Slider can display\nDNA and Protein FASTA files.", 
-        "View conservation of GFF\nand JASPAR motifs.",
-    };
 
-    if (frameCount < 300) {
-        displayMessage("Gene Slider", msg[0], 255);
-    } else if (frameCount < 600) {
-        displayMessage("Enter some data to get started.", msg[1], 255);
-    } else if (frameCount < 900) {
-        displayMessage("Enter some data to get started.", msg[2], 255);
-    } else if (frameCount < 1200) {
-        displayMessage("Enter some data to get started.", msg[3], 255);
-    } else if (frameCount < 1800) {
-        displayMessage("Enter some data to get started.", msg[4], 255);
-    } else if (frameCount < 2100) {
-        displayMessage("Enter some data to get started.", msg[5], 255);
-    } else {
-        frameCount = 101;
+    displayMessage("Loading Data", "", 255);
+
+    // draw fake progress bar base
+    strokeWeight(1);
+    stroke(200);
+    noFill();
+    rect(canvasWidth/2-75, canvasHeight/2+30, 150, 10, 4);
+
+    // draw fake progress bar top
+    strokeWeight(1);
+    noStroke();
+    int barWidth = int(frameCount/2);
+
+    if (frameCount > 1800) {
+        barWidth = 150;
+        fill(120);
+        text("The server is not responding. Try again later.", canvasWidth/2,canvasHeight/2+60);
     }
-    pointer(750, 2);
+    else if (frameCount > 1200) {
+        barWidth = 150;
+        fill(120);
+        text("Well this is embarrassing...", canvasWidth/2,canvasHeight/2+60);
+    }
+    else if (frameCount > 300) {
+        barWidth = 150;
+        fill(120);
+        text("Just a bit longer...", canvasWidth/2,canvasHeight/2+60);
+    }
+
+    fill(#99CC00);
+    rect(canvasWidth/2-75, canvasHeight/2+30, barWidth, 10, 4);
+
 }
 
-void pointer (float pointerX, float pointerY) {
-    int fade = 255;
-
-    float scaleFactor;
-    stroke(#99CC00, fade);
-    strokeWeight(3);
-    fill(#99CC00, fade);
-
-    ////// compute bouncing up/down position
-    float bounceY = 20 + (10 * sin( radians(bounce) ));
-    bounce += 1;  
-
-    ////// if a new load, grow vine slowly
-    if (bounce < 50) {
-        pointerX = canvasWidth/2+152 + map(bounce, 0, 50, 0, pointerX-(canvasWidth/2)-152);
-        pointerY =canvasHeight/2 - map(bounce, 0, 50, 0, canvasHeight/2);
-        scaleFactor = map(bounce, 0, 50, 0, 30);
-    } else {
-        scaleFactor = 30;
-    }
-
-    ///// big leaf
-    beginShape();
-    //point
-    curveVertex(pointerX-scaleFactor*4, pointerY+scaleFactor+bounceY/2+10);
-    curveVertex(pointerX-scaleFactor*4, pointerY+scaleFactor+bounceY/2+10);
-    //top curve
-    curveVertex(pointerX-15-scaleFactor, pointerY+scaleFactor+bounceY+5);
-    curveVertex(pointerX-5, pointerY+scaleFactor+bounceY+25);
-    //base
-    curveVertex(pointerX, pointerY+scaleFactor+bounceY+75);
-    //bottom curve
-    curveVertex(pointerX-20-scaleFactor, pointerY+scaleFactor+bounceY+80);
-    curveVertex(pointerX-5-(3*scaleFactor), pointerY+scaleFactor+bounceY+20);
-    //point
-    curveVertex(pointerX-scaleFactor*4, pointerY+scaleFactor+bounceY/2+10);
-    curveVertex(pointerX-scaleFactor*4, pointerY+scaleFactor+bounceY/2+10);
-    endShape();
-
-    float scaleFactor2 = 65;
-    ///// if the stem has fully grown, grow small leaf
-    if (bounce>50 && bounce< 90) {
-        scaleFactor2 = map(bounce, 50, 90, 0, 65);
-    }
-    if (bounce>50) {
-
-        ///// small leaf    
-        beginShape();
-        //point
-        curveVertex(pointerX+10+(scaleFactor2), pointerY-scaleFactor2/2+bounceY/2+170);
-        curveVertex(pointerX+10+(scaleFactor2), pointerY-scaleFactor2/2+bounceY/2+170);
-        //top curve
-        curveVertex(pointerX+(scaleFactor2/2)+5, pointerY-scaleFactor2+bounceY+200);
-        //base
-        curveVertex(pointerX+8, pointerY+bounceY+170);
-        //bottom curve
-        curveVertex(pointerX+(scaleFactor2/2), pointerY-scaleFactor2/2+bounceY+210);
-        curveVertex(pointerX+(scaleFactor2/2)+22, pointerY-scaleFactor2-(scaleFactor2/2)+bounceY+240);
-        //point
-        curveVertex(pointerX+10+(scaleFactor2), pointerY-scaleFactor2/2+bounceY/2+170);
-        curveVertex(pointerX+10+(scaleFactor2), pointerY-scaleFactor2/2+bounceY/2+170);
-        endShape();
-    }
-
-    //// vine
-    noFill();
-    stroke(#99CC00, fade);
-    strokeWeight(5);
-    beginShape();
-    curveVertex(pointerX, pointerY+scaleFactor+bounceY+75);
-    curveVertex(pointerX, pointerY+scaleFactor+bounceY+75);
-    curveVertex(pointerX, (canvasHeight/2)-10);
-    curveVertex(canvasWidth/2+152, (canvasHeight/2)+30);
-    curveVertex(canvasWidth/2+152, (canvasHeight/2)+30);
-    endShape();
-
-    //// vine (duplicate) to thicken base of line
-    noFill();
-    strokeWeight(5);
-    beginShape();
-    curveVertex(pointerX, pointerY+scaleFactor+bounceY+75);
-    curveVertex(pointerX, pointerY+scaleFactor+bounceY+75);
-    curveVertex(pointerX, (canvasHeight/2)-10);
-    curveVertex(canvasWidth/2+152, (canvasHeight/2)+25);
-    curveVertex(canvasWidth/2+152, (canvasHeight/2)+25);
-    endShape();
-}
 
 // Provides a window for displaying messages on screen
 // messageText is the Title, and lineTwo is the text
@@ -2351,7 +2288,7 @@ void displayMessage(String messageText, String lineTwo, int fade) {
     stroke(#99CC00, fade);
     strokeWeight(3);
     fill(255, fade);
-    rect(canvasWidth/2-150, canvasHeight/2-100, 300, 200, 10);
+    rect(canvasWidth/2-150, canvasHeight/2-100, 300, 200, 4);
     fill(textColor, fade); 
     textAlign(CENTER);
     textFont (helvetica18, 16);
@@ -2364,6 +2301,12 @@ void displayMessage(String messageText, String lineTwo, int fade) {
     textFont(helvetica18, 12);
     text(lineTwo, canvasWidth/2, (canvasHeight/2) + offset);
 }
+
+
+
+
+
+
 
 // DNA or protein
 void DNAorProtein(char[][] data) {
@@ -2560,12 +2503,13 @@ void drawSliderBar() {
         noStroke();
         rect(sliderRectStart, sliderBarPaddingFromTop + 5, sliderRectEnd, sliderBarPaddingFromTop + 120);
     }
-    stroke(#BBBBBB);
+    stroke(#999999);
     strokeWeight(2);
 
     // Fill Color of small rectangle
     if ( (mouseX > sliderRectStart+3 && mouseX < sliderRectEnd-3) && (mouseY > sliderBarPaddingFromTop-15 && mouseY < sliderBarPaddingFromTop+10)) {
         fill(60);
+        cursorMove = true;
     } else {
         fill(245, 255);
     }
@@ -2615,9 +2559,10 @@ void drawSliderBar() {
     ////// left side end cap
     if ( (mouseX > sliderRectStart-15 && mouseX < sliderRectStart+2) && (mouseY > sliderBarPaddingFromTop-15 && mouseY < sliderBarPaddingFromTop+5)) {
         fill(80);
+        cursorHand = true;
         mouseOverButton = "scrollBarStart";
     } else {
-        fill(#BBBBBB);
+        fill(#999999);
     }
     noStroke();
     rect(sliderRectStart-9, sliderBarPaddingFromTop-7, 10, 3);
@@ -2626,9 +2571,10 @@ void drawSliderBar() {
     ///// right side end cap
     if ((mouseX > sliderRectEnd-2 && mouseX < sliderRectEnd+15) && (mouseY > sliderBarPaddingFromTop-15 && mouseY < sliderBarPaddingFromTop+5)) {
         fill(80);
+        cursorHand = true;
         mouseOverButton = "scrollBarEnd";
     } else {
-        fill(#BBBBBB);
+        fill(#999999);
     }
     noStroke();
     rect(sliderRectEnd, sliderBarPaddingFromTop-7, 10, 3);
@@ -2661,7 +2607,7 @@ void drawLegend() {
         for (int i=0; i<legendText.length; i++) {
             fill(colorScheme[currentColorScheme][i]);
             rect(canvasWidth -320+(i*70), bottomRow-17, 15, 15, 15);
-            fill(#888888);
+            fill(#333333);
             text(legendText[i], canvasWidth -320+(i*70)+20, bottomRow-5);
         }
     } else {
@@ -2679,7 +2625,7 @@ void drawLegend() {
                 fill(colorScheme[currentColorScheme][0]);
             }
             rect(canvasWidth -390+(i*70), bottomRow-17, 15, 15, 15);
-            fill(#888888);
+            fill(#333333);
             text(legendTextProtein[i], canvasWidth -390+(i*70)+20, bottomRow-5);
         }
     }
@@ -2721,15 +2667,16 @@ void drawAxis() {
         fill(200);
         textFont (helvetica10, 10); 
         if (showWeightedBitScore) {
-            text("Weighted\nBit Score", 48, digitY-(2 * digitHeight)-22);
+            text("Weighted", 48, digitY-(2 * digitHeight)-25);
+            text("Bit Score", 48, digitY-(2 * digitHeight)-13);
         } else {
             text("Bit Score", 48, digitY-(2 * digitHeight)-18);
         }
 
         if (gffPanelOpen) {
-            text("TAIR10", 48, digitY + 18);
+            text("TAIR10", 46, digitY + 20);
         } else {
-            text("Ref", 48, digitY + 18);
+            text("Ref", 48, digitY + 20);
         }
     } else {
 
@@ -2770,9 +2717,10 @@ void drawAxis() {
             fill(200);
             textFont (helvetica10, 10);
             if (showWeightedBitScore) {
-                text("Weighted\nBit Score", 48, digitY-(2 * digitHeight)-22);
+                text("Weighted", 48, digitY-(2 * digitHeight)-25);
+                text("Bit Score", 48, digitY-(2 * digitHeight)-13);
             } else {
-                text("Bit Score", 48, digitY-(2 * digitHeight)-18);
+                text("Bit Score", 48, digitY-(2 * digitHeight)-16);
             }   
             //text("Protein", 48, digitY+36);
         }
@@ -2821,19 +2769,28 @@ void drawAxis() {
         }
     }
 
-    // Show AGI if it exits
-    if ((gffPanelOpen) && !(searchPanelOpen)) {
-        if (agi != "") {
+    // Show AGI if it exits    
+    if ((gffPanelOpen) && !(searchPanelOpen)) {                
+        if (agi != "" && agi != "AT0G00000") {
             textFont(helvetica18, 28);
             fill(60);
             stroke(60);
-            text(agi.toUpperCase(), canvasWidth/2 - 55, 30);
+            text(agi.toUpperCase(), canvasWidth/2 - 70, 30);
             fill(200);
             stroke(200);
             textFont(helvetica18, 16);
-            text("Conservation bit scores across 9 species", canvasWidth/2 - 110, 55);
+            text("Conservation bit scores across 9 species", canvasWidth/2 - 145, 55);
         }
     }
+    // Show FASTA label if it exists
+    if (fastaLabel != "") {
+        textFont(helvetica18, 28);
+        fill(60);
+        stroke(60);
+        text(fastaLabel, canvasWidth/2 - 70, 30);
+    }
+
+
 }
 
 // Rount the two decimal places
@@ -2885,13 +2842,13 @@ void drawSearchPanel() {
         fill(255);
         strokeWeight(2);
         stroke(220);
-        rect(canvasWidth/2-270, searchPanelTop, 40, (searchHeight*2+10+searchTextBoxHeight), 20, 0, 0, 20);
+        rect(canvasWidth/2-275, searchPanelTop-5, 40, (searchHeight*2+10+searchTextBoxHeight)+20, 20, 0, 0, 4);
 
         // main rectangle containing the search box
         fill(255, 220);
         stroke(120);
         strokeWeight(2);
-        rect(canvasWidth/2-270, searchPanelTop, 540, (searchHeight*2+10+searchTextBoxHeight), 20);
+        rect(canvasWidth/2-275, searchPanelTop-5, 550, (searchHeight*2+10+searchTextBoxHeight)+20, 4);
 
         // text input box
         strokeWeight(3);
@@ -2901,7 +2858,7 @@ void drawSearchPanel() {
             stroke(digitBackground[currentSearchPanel+1]);
         }
         fill(255);
-        rect(canvasWidth/2-140, searchPanelTop+7, 300, 27, 10); //textbox
+        rect(canvasWidth/2-140, searchPanelTop+7, 300, 27, 4); //textbox
 
         //search panel number
         textFont (helvetica18, 16);
@@ -3258,7 +3215,7 @@ void drawColumnData() {
         strokeWeight(3);
         stroke(strokeColor, displayColumnFadeValue);
         fill(255, displayColumnFadeValue);
-        rect(width/2, height/2, 280, height-40, 30);
+        rect(width/2, height/2, 280, height-40, 8);
 
         //draw connecting lines to active base
         stroke(230, displayColumnFadeValue);
@@ -3301,14 +3258,14 @@ void drawColumnData() {
             strokeWeight(1);
             stroke(strokeColor, displayColumnFadeValue);
         }
-        ellipse(width/2+155, 50, 20, 20);
+        ellipse(width/2+157, 50, 20, 20);
         // if mouse is over, darken fill
         if (tempMouseTest) {
             fill(120, displayColumnFadeValue);
         } else {
             fill(200, displayColumnFadeValue);
         }
-        text("✕", width/2+155.5, 55);
+        text("•", width/2+157.5, 55);
 
         //// Draw the text with adjustable start and stop lines
 
@@ -3441,7 +3398,7 @@ void drawColumnData() {
             strokeWeight(2);
             stroke(strokeColor, displayColumnFadeValue);
             fill(255, displayColumnFadeValue);
-            rect(width/2+105, 40, 20, height-80, 30);
+            rect(width/2+105, 40, 10, height-80, 30);
 
             // determine start and end points of control slider
             float sliderYStart = map(columnDataStart, 0, numLines, 40, height-80);
@@ -3459,7 +3416,7 @@ void drawColumnData() {
             } else {        
                 fill(230, displayColumnFadeValue);
             }
-            rect(width/2+105, sliderYStart, 20, sliderYEnd, 30);
+            rect(width/2+105, sliderYStart, 10, sliderYEnd, 30);
 
             /// Scroll right and left triangles
         }        
@@ -3526,7 +3483,7 @@ void displaygffMessage(String tipText_temp) {
     // if mouse is close to top of screen, nudge it downwards
     if (mouseY < 200) {
         tooltip_mouseOffsetY = tooltip_textHeight-10;
-        tooltip_mouseOffsetX = 10;
+        tooltip_mouseOffsetX = 17;
     } else {
         tooltip_mouseOffsetY = -10;
         tooltip_mouseOffsetX = -15;
@@ -3534,13 +3491,13 @@ void displaygffMessage(String tipText_temp) {
 
     /// if mouse close to right edge of screen, put tool tips on left side of mouse
     if (mouseX > canvasWidth-tooltip_distanceFromEdgeToReverseMouseXOffset) {
-        tooltip_mouseOffsetX = int(textWidth(tooltip_tipText) * -0.90);
+        tooltip_mouseOffsetX = int(textWidth(tooltip_tipText) * -1.2);
     }
 
 
     // finally, adjust the placement variables according to the computed offset
-    tooltip_currentX = mouseX+tooltip_mouseOffsetX;
-    tooltip_currentY = mouseY+tooltip_mouseOffsetY;
+    tooltip_currentX = mouseX+tooltip_mouseOffsetX-3;
+    tooltip_currentY = mouseY+tooltip_mouseOffsetY-3;
 
 
     //////////////////////////////////////////
@@ -3549,15 +3506,24 @@ void displaygffMessage(String tipText_temp) {
     fill(tooltip_backgroundColor, 255); // non-transparent
     stroke(tooltip_strokeColor);
     strokeWeight(1);
-    rect(tooltip_currentX, tooltip_currentY-tooltip_textHeight, textWidth(tooltip_tipText)+tooltip_paddingRight, tooltip_textHeight, 3);
+    rect(tooltip_currentX-3, tooltip_currentY-tooltip_textHeight-3, textWidth(tooltip_tipText)+tooltip_paddingRight+6, tooltip_textHeight+6, 3);
 
     // The Triangle
     if (mouseY < 200) {
-        beginShape(TRIANGLES);
-        vertex(mouseX+10, mouseY-10);
-        vertex(mouseX+10, mouseY+10);
-        vertex(mouseX, mouseY);
-        endShape();
+        if (mouseX > canvasWidth-tooltip_distanceFromEdgeToReverseMouseXOffset) {
+            beginShape(TRIANGLES);
+            vertex(mouseX-14, mouseY-10);
+            vertex(mouseX-14, mouseY+10);
+            vertex(mouseX, mouseY);
+            endShape();
+        }
+        else {
+            beginShape(TRIANGLES);
+            vertex(mouseX+12, mouseY-10);
+            vertex(mouseX+12, mouseY+10);
+            vertex(mouseX, mouseY);
+            endShape();
+        }
     } else {
         beginShape(TRIANGLES);
         vertex(mouseX-10, mouseY-10);
@@ -3565,10 +3531,16 @@ void displaygffMessage(String tipText_temp) {
         vertex(mouseX, mouseY);
         endShape();
     }
+
     stroke(255);
     strokeWeight(2);
     if (mouseY < 200) {
-        line(mouseX+10, mouseY-9, mouseX+10, mouseY+9);
+        if (mouseX > canvasWidth-tooltip_distanceFromEdgeToReverseMouseXOffset) {
+            line(mouseX-14, mouseY-9, mouseX-14, mouseY+9);
+        }
+        else {
+            line(mouseX+12, mouseY-9, mouseX+12, mouseY+9);
+        }
     } else {
         line(mouseX-9, mouseY-10, mouseX+9, mouseY-10);
     }
@@ -3597,7 +3569,7 @@ void displaygffMessage(String tipText_temp) {
         lineBreak = tooltip_tipText.indexOf("\n", endSlurp);
         //colored letter
 
-        text (tooltip_tipText.substring(startSlurp+1, endSlurp), tooltip_currentX+tooltip_paddingLeft+5, tooltip_currentY-tooltip_textHeight+(newLine*15)+(tooltip_countLinesUntilBreak*20)+10);//JW
+        text (tooltip_tipText.substring(startSlurp+1, endSlurp), tooltip_currentX+tooltip_paddingLeft+5, tooltip_currentY-tooltip_textHeight+(newLine*15)+(tooltip_countLinesUntilBreak*20)+10);
         //gene name
 
         text (tooltip_tipText.substring(endSlurp+1, lineBreak), tooltip_currentX+tooltip_paddingLeft+15, tooltip_currentY-tooltip_textHeight+(newLine*15)+(tooltip_countLinesUntilBreak*20)+10);
@@ -3609,6 +3581,10 @@ void displaygffMessage(String tipText_temp) {
     fill(255, 220);
     strokeWeight(2);
     stroke(220);
+
+    cursorHand = true;
+
+
 }
 
 // This function returns query for URL in javascript mode
@@ -3719,7 +3695,7 @@ void addMotifPosition() {
     // Add the positon of one to all JASPAR
     for (i = 0; i < jsonClone.transcripts; i++) {
         for (j = 0; j < jsonClone.gff[i].data.length; j++) {
-            if (((jsonClone.gff[i].data[j][0].equals("JASPAR"))  || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014")))) {
+            if (((jsonClone.gff[i].data[j][0].equals("JASPAR"))  || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014")) || (jsonClone.gff[i].data[j][0].equals("Motif")))) {
                 if (jsonClone.gff[i].data[j].length == 7) {
                     append(jsonClone.gff[i].data[j], 0);
                 }
@@ -3730,8 +3706,8 @@ void addMotifPosition() {
     for (i = 0; i < jsonClone.transcripts; i++) {
         for (j = 0; j < jsonClone.gff[i].data.length; j++) {
             for (k = 0; k < jsonClone.gff[i].data.length; k++) {
-                if ((jsonClone.gff[i].data[j][0].equals("JASPAR"))  || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014"))) {
-                    if ((jsonClone.gff[i].data[k][0].equals("JASPAR"))  || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014"))) {
+                if ((jsonClone.gff[i].data[j][0].equals("JASPAR"))  || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014")) || (jsonClone.gff[i].data[j][0].equals("Motif"))) {
+                    if ((jsonClone.gff[i].data[k][0].equals("JASPAR"))  || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014")) || (jsonClone.gff[i].data[j][0].equals("Motif"))) {
 
                         // It will always overlap with itself (!)
                         if ((jsonClone.gff[i].data[j][6] == jsonClone.gff[i].data[k][6]) && (jsonClone.gff[i].data[j][1] == jsonClone.gff[i].data[k][1]) && (jsonClone.gff[i].data[j][2] == jsonClone.gff[i].data[k][2])) {
@@ -3757,7 +3733,7 @@ void addMotifPosition() {
     // Add the positon of one to all JASPAR
     for (i = 0; i < jsonClone.transcripts; i++) {
         for (j = 0; j < jsonClone.gff[i].data.length; j++) {
-            if ((jsonClone.gff[i].data[j][0].equals("JASPAR"))  || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014"))) {
+            if ((jsonClone.gff[i].data[j][0].equals("JASPAR"))  || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014")) || (jsonClone.gff[i].data[j][0].equals("Motif"))) {
                 if (jsonClone.gff[i].data[j][7] == 0) {
                     jsonClone.gff[i].data[j][7] = 1;
                 }
@@ -3801,7 +3777,7 @@ void drawMotifLegend() {
     stroke(220);
     strokeWeight(5);
     fill(255);
-    rect(x - 15, y - 15, w + 15, h + 15, 20);
+    rect(x - 15, y - 15, w + 15, h + 15, 10);
 
     // Sequence Data
     textAlign(LEFT);    
@@ -3953,9 +3929,9 @@ class RectButton {
         } else {
             fill(#BBBBBB);
         }
-        rect(xPosRB, yPosRB-20, buttonWidthRB, 20, 8); 
+        rect(xPosRB, yPosRB-20, buttonWidthRB, 20, 4); 
         //draw text
-        fill(#888888);
+        fill(#333333);
         textAlign(LEFT);
         text(labelRB, xPosRB+6, yPosRB-5);    
 
@@ -3969,6 +3945,7 @@ class RectButton {
     void mouseOver() {
         if (mouseX > xPosRB && mouseX < xPosRB + buttonWidthRB && mouseY > yPosRB-20 && mouseY < yPosRB) {
             mouseOverRB = true;
+            cursorHand = true;            
         } else {
             mouseOverRB = false;
         }
@@ -4058,12 +4035,14 @@ class TriangleButton {
         if (xPosTB < xPosTB+wTB) { 
             if (mouseX > xPosTB && mouseX < xPosTB + wTB && mouseY > yPosTB-hTB && mouseY < yPosTB) {
                 mouseOverTB = true;
+                cursorHand = true;
             } else {
                 mouseOverTB = false;
             }
         } else {
             if (mouseX > xPosTB+wTB && mouseX < xPosTB && mouseY > yPosTB-hTB && mouseY < yPosTB) {
-                mouseOverTB = true;
+                 cursorHand = true;
+                 mouseOverTB = true;
             } else {
                 mouseOverTB = false;
             }
@@ -4135,18 +4114,18 @@ class RoundButton {
         if (valueIfOnRNB == "searchPanel") {
             fill(255);
             if (mouseOverRNB == false) {
-                stroke(220);
+                stroke(200);
             } else {
                 stroke(120);
             }
-            strokeWeight(3);
+            strokeWeight(2);
             //ellipse(xPosRNB, yPosRNB-5, 35, 35);
             if (!searchPanelOpen) {
-                rect(canvasWidth/2-270, 10, 40, 40, 20);
+                rect(canvasWidth/2-270, 10, 40, 40, 4);
             }
             textFont (helvetica18, 15);
             if (mouseOverRNB == false) {
-                fill(220);
+                fill(200);
             } else {
                 fill(120);
             }
@@ -4166,7 +4145,7 @@ class RoundButton {
             } else {
                 stroke(120);
             }
-            strokeWeight(3);
+            strokeWeight(2);
             ellipse(xPosRNB, yPosRNB-5, 20, 20);
             textFont (helvetica18, 12);
             if (mouseOverRNB == false) {
@@ -4249,6 +4228,8 @@ class RoundButton {
     void mouseOver() {
         if (mouseX > xPosRNB-(35/2) && mouseX < xPosRNB + (35/2) && mouseY > yPosRNB-(30/2) && mouseY < yPosRNB+(30/2)) {
             mouseOverRNB = true;
+            cursorHand = true;
+
         } else {
             mouseOverRNB = false;
         }
@@ -4366,7 +4347,7 @@ class CheckBox {
             stroke(lerpColor(boxColorCB, 255, .5));
             strokeWeight(strokeWidthCB+2);
         }
-        rect(xPosCB, yPosCB-hCB, wCB, hCB, 5);
+        rect(xPosCB, yPosCB-hCB, wCB, hCB, 4);
     }
 
     //////////////////////////////////////////
@@ -4375,6 +4356,8 @@ class CheckBox {
     void mouseOver() {
         if (mouseX > xPosCB && mouseX < xPosCB + wCB && mouseY > yPosCB-hCB && mouseY < yPosCB) {
             mouseOverCB = true;
+            cursorHand = true;
+
         } else {
             mouseOverCB = false;
         }
@@ -4409,15 +4392,21 @@ void setEndDigit(int end) {
     endDigit = end;
 }
 
-// Set gffPane
+// Set gffPanel 
 void setgffPanelOpen(boolean data) {
     gffPanelOpen = data;
 }
 
+// Is GFF Panel open
+boolean isgffPanelOpen() {
+    return gffPanelOpen;
+}
+
 // Set FASTA data from javascript. This function must run last
-void setFastaData(String data) {
+void setFastaData(String data, String label) {
     gsStatus = 1;
     fastaData = data;
+    fastaLabel = label;
     loop();
     redraw();
 }
@@ -4447,7 +4436,7 @@ void setSessionData(String _source, String _agi, int _before, int _after, String
 
 // set welcome
 void setWelcome() {
-    showWelcome = false;
+    //showWelcome = false;  // JAMIE: I shut this off so the loading bar doesn't get turned off too early
 }
 
 // This function draws a pointed rectangle to represent a gene on GFF pannel
@@ -4644,6 +4633,7 @@ void showZoomedGff() {
                             // GFF info box
                             if (!(displayColumnData) && (mouseX > startElement + x && mouseX < startElement + x + endElement -  startElement && mouseY >  newY && mouseY < newY + h)) {
                                 popupOn = true;
+                                cursorHand = true;
                                 if (jsonClone.gff[i].data[j][3].equals("+")) {
                                     popupData = "Gene ID: " + jsonClone.gff[i].geneId + "\nType: " + jsonClone.gff[i].data[j][0] + "\nStart: " + jsonClone.gff[i].data[j][1] + "\nEnd: " + jsonClone.gff[i].data[j][2] + "\nStrand: " + jsonClone.gff[i].data[j][3];
                                 } else {
@@ -4701,14 +4691,13 @@ void showZoomedGff() {
                 for (j = 0; j < jsonClone.gff[i].data.length; j++) {
                     // Skip the following elements
 
-                    if ((jsonClone.gff[i].data[j][0].equals("JASPAR"))  || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014"))) {
+                    if ((jsonClone.gff[i].data[j][0].equals("JASPAR"))  || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014")) || (jsonClone.gff[i].data[j][0].equals("Motif"))) {
 
                         // Get the start and the end
                         startElement = getStartElement(jsonClone.gff[i].data[j][1], startDigit + alnStart, scale);
                         endElement = getEndElement(jsonClone.gff[i].data[j][2], startDigit + alnStart, scale, size);
 
                         if (endElement > startElement) {
-
                             // Set motif offset
                             motifOffset = jsonClone.gff[i].data[j][7] * 6;
 
@@ -4922,7 +4911,7 @@ void showgffPanel() {
 
                 // Draw JASPAR
                 for (j = 0; j < jsonClone.gff[i].data.length; j++) {                
-                    if ((jsonClone.gff[i].data[j][0].equals("JASPAR")) || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014"))) {
+                    if ((jsonClone.gff[i].data[j][0].equals("JASPAR")) || (jsonClone.gff[i].data[j][0].equals("Weirauch et al. 2014")) || (jsonClone.gff[i].data[j][0].equals("Motif"))) {
 
                         if (jsonClone.gff[i].data[j][7] == 100) {
                             continue;
